@@ -667,7 +667,13 @@ Return Value:
                 }
 
                 break;
-            
+
+            case ClearRules:
+
+                // Clear the rules stored in buffer.
+                FreeAllKernelRules();
+
+                break;
 
             default:
                 status = STATUS_INVALID_PARAMETER;

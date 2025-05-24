@@ -61,6 +61,16 @@ RetrieveLogRecords(
     _In_ LPVOID lpParameter
     );
 
+DWORD
+SendActiveRulesToKernel(
+    _In_ HANDLE filterPort
+    );
+
+DWORD
+ClearRulesInKernel(
+    _In_ HANDLE filterPort
+    );
+
 VOID
 DatabaseDump(
     _In_ ULONG SequenceNumber,

@@ -232,7 +232,8 @@ typedef enum _MINISPY_COMMAND {
 
     GetMiniSpyLog,
     GetMiniSpyVersion,
-    UpdateRules
+    UpdateRules,
+    ClearRules
 
 } MINISPY_COMMAND;
 
