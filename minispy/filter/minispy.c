@@ -646,15 +646,15 @@ Return Value:
                             break;
                         }
 
-                        //Optional: check that RuleString is null-terminated.
+                        //Check that RuleString is null-terminated.
                         WCHAR* str = ruleRec->Data.RuleString;
                         if (str[(ruleRec->Data.RuleLength / sizeof(WCHAR)) - 1] != L'\0') {
                             status = STATUS_INVALID_PARAMETER;
                             break;
                         }
 
-                        // TODO: Store rule
-                        // AddToRuleList(&ruleRec->Data);
+                        // TODO: Could perhaps check rules string whether relevant to this instance of mini filter (volume attached to, before adding)
+                        AddToKernelRuleList(ruleRec);
 
                         //Move to the next rule record, ensuring pointer stays aligned to sizeof(PVOID).
                         offset += ROUND_TO_SIZE(ruleRec->Length, sizeof(PVOID));

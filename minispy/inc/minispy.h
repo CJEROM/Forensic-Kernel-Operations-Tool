@@ -148,8 +148,6 @@ typedef struct _RECORD_DATA {
 
 typedef struct _RULE_DATA {
 
-    ULONG Active;        // 1 = enabled, 0 = disabled
-    ULONG Deleted;        // 1 = Deleted, 0 = Present
     ULONG Action;        // 0 = ignore, 1 = alert, 2 = block
     ULONG RuleType;      // 0 = hash, 1 = path, 2 = extension
     ULONG RuleTarget;    // 0 = operation file name target, 1 = process
