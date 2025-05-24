@@ -326,6 +326,10 @@ SpyFreeBuffer (
     _In_ PVOID Buffer
     );
 
+//---------------------------------------------------------------------------
+//  Rule list allocation routines
+//---------------------------------------------------------------------------
+
 NTSTATUS
 AddToKernelRuleList(
     _In_ const RULE_RECORD* rule
