@@ -339,7 +339,7 @@ SendActiveRulesToKernel(
 
     
     DWORD bytesReturned = 0;
-    const char* query = "SELECT Action, RuleType, RuleTarget, RuleString FROM Rules WHERE Active=1 AND Deleted=0";
+    const char* query = "SELECT RuleID, Action, RuleType, RuleTarget, RuleString FROM Rules WHERE Active=1 AND Deleted=0";
 
     int rc = sqlite3_open(DATABASE_FILE_LOCATION, &db);
     if (rc != SQLITE_OK) return 1;
@@ -363,10 +363,11 @@ SendActiveRulesToKernel(
 
     while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
 
-        ULONG action = (ULONG)sqlite3_column_int(stmt, 0);
-        ULONG ruleType = (ULONG)sqlite3_column_int(stmt, 1);
-        ULONG ruleTarget = (ULONG)sqlite3_column_int(stmt, 2);
-        const char* ruleAnsi = (const char*)sqlite3_column_text(stmt, 3);
+        ULONG ruleID = (ULONG)sqlite3_column_int(stmt, 0);
+        ULONG action = (ULONG)sqlite3_column_int(stmt, 1);
+        ULONG ruleType = (ULONG)sqlite3_column_int(stmt, 2);
+        ULONG ruleTarget = (ULONG)sqlite3_column_int(stmt, 3);
+        const char* ruleAnsi = (const char*)sqlite3_column_text(stmt, 4);
 
         // Convert RuleString to wide char
         WCHAR ruleString[MAX_RULE_STRING_LENGTH] = { 0 };
@@ -390,6 +391,7 @@ SendActiveRulesToKernel(
         PRULE_RECORD ruleRec = (PRULE_RECORD)(cmdMsg->Data + dataOffset);
         ruleRec->Length = ruleSize;
         ruleRec->Reserved = 0;
+        ruleRec->Data.RuleID = ruleID;
         ruleRec->Data.Action = action;
         ruleRec->Data.RuleType = ruleType;
         ruleRec->Data.RuleTarget = ruleTarget;
@@ -1349,7 +1351,7 @@ Return Value:
     //Set what rule then blocked the operation if it was (from the block list)
     sqlite3_bind_int(stmt, 24, RecordData->BlockingRuleID);
 
-    //sqlite3_bind_int(stmt, 25, 0);
+    sqlite3_bind_int(stmt, 25, RecordData->RuleAction);
 
     //Execute insert command
     if (sqlite3_step(stmt) != SQLITE_DONE) {

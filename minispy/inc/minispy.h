@@ -135,7 +135,9 @@ typedef struct _RECORD_DATA {
     LARGE_INTEGER Arg6;
 
     CCHAR RequestorMode;
+
     INT BlockingRuleID;
+    INT RuleAction;
 
     ULONG EcpCount;
     ULONG KnownEcpMask;
@@ -148,6 +150,7 @@ typedef struct _RECORD_DATA {
 
 typedef struct _RULE_DATA {
 
+    ULONG RuleID;        // The id of the rule that gets passed along.
     ULONG Action;        // 0 = ignore, 1 = alert, 2 = block
     ULONG RuleType;      // 0 = hash, 1 = path, 2 = extension
     ULONG RuleTarget;    // 0 = operation file name target, 1 = process
