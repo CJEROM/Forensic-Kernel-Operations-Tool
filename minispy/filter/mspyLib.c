@@ -209,6 +209,57 @@ Return Value:
     ExFreeToNPagedLookasideList( &MiniSpyData.FreeBufferList, Buffer );
 }
 
+//---------------------------------------------------------------------------
+//                    Rule List allocation routine
+//---------------------------------------------------------------------------
+
+NTSTATUS
+AddToKernelRuleList(
+    _In_ const RULE_RECORD* rule
+)
+{
+    ULONG allocSize = sizeof(RULE_LIST) - sizeof(WCHAR) + rule->Data.RuleLength;
+    PRULE_LIST entry = ExAllocatePoolWithTag(NonPagedPoolNx, allocSize, 'RulE');
+
+    if (!entry) {
+        return STATUS_INSUFFICIENT_RESOURCES;
+    }
+
+    // Copy RULE_RECORD metadata
+    RtlCopyMemory(&entry->Rule, rule, sizeof(RULE_RECORD));
+
+    // Copy rule string (the flexible array)
+    RtlCopyMemory(entry->Rule.Data.RuleString, rule->Data.RuleString, rule->Data.RuleLength);
+
+    // Update the total length field in the new copy
+    entry->Rule.Length = allocSize;
+
+    // Add to global rule list
+    KIRQL oldIrql;
+    KeAcquireSpinLock(&MiniSpyData.RuleListLock, &oldIrql);
+    InsertTailList(&MiniSpyData.RuleList, &entry->List);
+    KeReleaseSpinLock(&MiniSpyData.RuleListLock, oldIrql);
+
+    return STATUS_SUCCESS;
+}
+
+VOID
+FreeAllKernelRules(VOID)
+{
+    KIRQL oldIrql;
+    PLIST_ENTRY entry;
+    PRULE_LIST rule;
+
+    KeAcquireSpinLock(&MiniSpyData.RuleListLock, &oldIrql);
+
+    while (!IsListEmpty(&MiniSpyData.RuleList)) {
+        entry = RemoveHeadList(&MiniSpyData.RuleList);
+        rule = CONTAINING_RECORD(entry, RULE_LIST, List);
+        ExFreePoolWithTag(rule, 'RulE');
+    }
+
+    KeReleaseSpinLock(&MiniSpyData.RuleListLock, oldIrql);
+}
 
 //---------------------------------------------------------------------------
 //                    Logging routines
