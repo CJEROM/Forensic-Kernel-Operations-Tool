@@ -571,6 +571,7 @@ Return Value:
 
             case UpdateRules:
 
+                //Checking for alignment for 32 bit applications on 64 bit systems (from above example)
 #if defined(_WIN64)
                 if (IoIs32bitProcess(NULL)) {
                     if (!IS_ALIGNED(InputBuffer, sizeof(ULONG))) {
@@ -587,25 +588,80 @@ Return Value:
                     }
                 }
 
-                // You may also validate minimum size of rule structure
-                if (InputBufferSize < sizeof(RULE_UPDATE_MESSAGE)) {
+                // Basic safety check: InputBuffer must be large enough to at least hold the COMMAND_MESSAGE header.
+                if (InputBuffer == NULL || InputBufferSize < FIELD_OFFSET(COMMAND_MESSAGE, Data)) {
                     status = STATUS_INVALID_PARAMETER;
                     break;
                 }
 
-                // Always wrap in try/except to protect from invalid memory
+                // Wrap buffer access in a try/except to catch bad pointers or memory access issues.
                 try {
-                    PRULE_UPDATE_MESSAGE ruleMsg = (PRULE_UPDATE_MESSAGE)InputBuffer;
 
-                    // Process ruleMsg: e.g., add to internal list or config
-                    status = ProcessUpdateRules(ruleMsg, InputBufferSize);
+                    //
+                    // Cast the raw InputBuffer to a COMMAND_MESSAGE structure.
+                    // This gives us access to the Command field (already used earlier),
+                    // and the variable-length Data[] array, which contains the RULE_RECORDs.
+                    //
+
+                    PCOMMAND_MESSAGE cmdMsg = (PCOMMAND_MESSAGE)InputBuffer;
+
+                    // Get a pointer to the start of the actual RULE_RECORDs.
+                    PUCHAR ruleDataStart = (PUCHAR)cmdMsg->Data;
+
+                    // Calculate how much of the InputBuffer is available for rule records
+                    ULONG ruleDataSize = InputBufferSize - FIELD_OFFSET(COMMAND_MESSAGE, Data);
+
+                    // Offset pointer for walking through each RULE_RECORD.
+                    ULONG offset = 0;
+
+                    //Process each RULE_RECORD in the buffer one at a time.
+                    while (offset + sizeof(RULE_RECORD) <= ruleDataSize) {
+
+                        PRULE_RECORD ruleRec = (PRULE_RECORD)(ruleDataStart + offset);
+
+                        // Check that the record claims a valid size and doesn't overflow the buffer.
+                        if (ruleRec->Length < sizeof(RULE_RECORD) ||
+                            offset + ruleRec->Length > ruleDataSize) {
+                            status = STATUS_INVALID_PARAMETER;
+                            break;
+                        }
+
+                        // Validate that RuleLength (length of RuleString) is reasonable.
+                        if (ruleRec->Data.RuleLength == 0 ||
+                            ruleRec->Data.RuleLength > MAX_RULE_STRING_LENGTH * sizeof(WCHAR)) {
+                            status = STATUS_INVALID_PARAMETER;
+                            break;
+                        }
+
+                        // Ensure RuleString fits within the Length of the RULE_RECORD.
+                        ULONG requiredSize = sizeof(RULE_RECORD) - sizeof(WCHAR) + ruleRec->Data.RuleLength;
+                        if (ruleRec->Length < requiredSize) {
+                            status = STATUS_INVALID_PARAMETER;
+                            break;
+                        }
+
+                        //Optional: check that RuleString is null-terminated.
+                        WCHAR* str = ruleRec->Data.RuleString;
+                        if (str[(ruleRec->Data.RuleLength / sizeof(WCHAR)) - 1] != L'\0') {
+                            status = STATUS_INVALID_PARAMETER;
+                            break;
+                        }
+
+                        // TODO: Store rule
+                        // AddToRuleList(&ruleRec->Data);
+
+                        //Move to the next rule record, ensuring pointer stays aligned to sizeof(PVOID).
+                        offset += ROUND_TO_SIZE(ruleRec->Length, sizeof(PVOID));
+                    }
+
+                    status = (offset == 0) ? STATUS_INVALID_PARAMETER : STATUS_SUCCESS;
 
                 } except(SpyExceptionFilter(GetExceptionInformation(), TRUE)) {
                     return GetExceptionCode();
                 }
 
                 break;
-}
+            
 
             default:
                 status = STATUS_INVALID_PARAMETER;
