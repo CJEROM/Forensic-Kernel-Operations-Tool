@@ -215,6 +215,10 @@ typedef struct _RECORD_LIST {
 
 } RECORD_LIST, *PRECORD_LIST;
 
+//
+//  How the mini-filter manages the rules#
+// 
+
 typedef struct _RULE_LIST {
 
     LIST_ENTRY List;
