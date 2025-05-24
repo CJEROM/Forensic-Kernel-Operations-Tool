@@ -765,8 +765,8 @@ Return Value:
                     WriteAlertToDatabase("Cleared kernel rules.");
                 }
                 else {
-                    printf("Failed to clear kernel rules (error code %lu)\n", result);
-                    WriteAlertToDatabase("Failed to clear kernel rules (error code %lu)", result);
+                    printf("Failed to clear kernel rules");
+                    WriteAlertToDatabase("Failed to clear kernel rules");
                 }
 
                 break;

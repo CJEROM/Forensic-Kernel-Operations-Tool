@@ -434,6 +434,8 @@ ClearRulesInKernel(
         NULL,
         0,
         &bytesReturned);
+
+    return SUCCEEDED(hResult);
 }
 
 VOID
