@@ -600,6 +600,9 @@ Return Value:
                 // Wrap buffer access in a try/except to catch bad pointers or memory access issues.
                 try {
 
+                    // Clear old rules before inserting new ones
+                    FreeAllKernelRules();
+
                     //
                     // Cast the raw InputBuffer to a COMMAND_MESSAGE structure.
                     // This gives us access to the Command field (already used earlier),
