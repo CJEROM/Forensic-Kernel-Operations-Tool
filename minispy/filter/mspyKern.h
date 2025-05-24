@@ -150,6 +150,13 @@ typedef struct _MINISPY_DATA {
     LIST_ENTRY OutputBufferList;
 
     //
+    //  List of buffers with rule data to store in kernel
+    //
+
+    KSPIN_LOCK RuleListLock;
+    LIST_ENTRY RuleList;
+
+    //
     //  Lookaside list used for allocating buffers.
     //
 
