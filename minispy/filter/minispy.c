@@ -133,6 +133,9 @@ Return Value:
         InitializeListHead( &MiniSpyData.OutputBufferList );
         KeInitializeSpinLock( &MiniSpyData.OutputBufferLock );
 
+        InitializeListHead(&MiniSpyData.RuleList);
+        KeInitializeSpinLock(&MiniSpyData.RuleListLock);
+
         ExInitializeNPagedLookasideList( &MiniSpyData.FreeBufferList,
                                          NULL,
                                          NULL,
