@@ -326,6 +326,16 @@ SpyFreeBuffer (
     _In_ PVOID Buffer
     );
 
+NTSTATUS
+AddToKernelRuleList(
+    _In_ const RULE_RECORD* rule
+    );
+
+VOID
+FreeAllKernelRules(
+    VOID
+    );
+
 //---------------------------------------------------------------------------
 //  Logging routines
 //---------------------------------------------------------------------------
