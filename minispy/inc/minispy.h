@@ -95,6 +95,12 @@ typedef _Return_type_success_(return >= 0) LONG NTSTATUS;
 #define RECORD_TYPE_FLAG_MASK                    0xffff0000
 
 //
+// Defines the limit of the string lenght of rules passed through for rules
+//
+
+#define MAX_RULE_STRING_LENGTH 256
+
+//
 //  The fixed data received for RECORD_TYPE_NORMAL
 //
 
@@ -137,6 +143,22 @@ typedef struct _RECORD_DATA {
 } RECORD_DATA, *PRECORD_DATA;
 
 //
+// Defining RULE_DATA structure for receiving rules from user mode component
+//
+
+typedef struct _RULE_DATA {
+
+    ULONG Active;        // 1 = enabled, 0 = disabled
+    ULONG Action;        // 0 = ignore, 1 = alert, 2 = block
+    ULONG RuleType;      // 0 = hash, 1 = path, 2 = extension
+    ULONG RuleTarget;    // 0 = operation file name target, 1 = process
+
+    ULONG RuleLength;    // Length in bytes of RuleString (including null terminator)
+    WCHAR RuleString[1]; // Flexible string
+
+} RULE_DATA, * PRULE_DATA;
+
+//
 //  What information we actually log.
 //
 
@@ -156,6 +178,20 @@ typedef struct _LOG_RECORD {
     WCHAR Name[];           //  This is a null terminated string
 
 } LOG_RECORD, *PLOG_RECORD;
+
+//
+// Acts as a wrapper to hold multiple rules at once while accounting for alignment on I64/x64 systems
+// which will enable sending all rules at once instead of one at a time
+// 
+
+typedef struct _RULE_RECORD {
+
+    ULONG Length;          // Total size of this record (including RuleString, rounded)
+    ULONG Reserved;        // For alignment on IA64 (padding)
+
+    RULE_DATA Data;        // Actual rule data
+
+} RULE_RECORD, * PRULE_RECORD;
 
 #pragma warning(pop)
 
@@ -178,6 +214,13 @@ typedef struct _RECORD_LIST {
     LOG_RECORD LogRecord;
 
 } RECORD_LIST, *PRECORD_LIST;
+
+typedef struct _RULE_LIST {
+
+    LIST_ENTRY List;
+    RULE_RECORD Rule;
+
+} RULE_LIST, * PRULE_LIST;
 
 //
 //  Defines the commands between the utility and the filter
