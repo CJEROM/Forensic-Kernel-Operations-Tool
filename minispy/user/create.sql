@@ -196,7 +196,6 @@ CREATE TABLE IF NOT EXISTS Rules (
     Active INTEGER NOT NULL, -- e.g Yes: 1, No: 0
     Deleted INTEGER NOT NULL, -- e.g Yes: 1, No: 0
     Action INTEGER NOT NULL, -- What type of action to take for the rule e.g. Block: 2, Alert: 1, Ignore: 0
-    --Whether it is a block rule or an exception rule
     RuleType INTEGER NOT NULL, --Whether it is a File Hash, File Location or File Extension.
     RuleTarget INTEGER NOT NULL, -- Whether targeting the process or the operation file name
     RuleString TEXT NOT NULL -- The actual File Hash, File Location or File Extension (RULE itself)
