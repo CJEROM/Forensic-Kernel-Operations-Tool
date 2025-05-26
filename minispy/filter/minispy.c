@@ -811,7 +811,7 @@ Return Value:
                 FltParseFileNameInformation( nameInfo );
 
                 //Find if the operation is targeted by any rules, and return the rule, triggering it
-                matchedRule = FindMatchingRule(nameInfo, NULL); 
+                matchedRule = FindMatchingRule(&nameInfo); 
                 // Set values for blocked operation.
                 if (matchedRule && matchedRule->Action == 3) { // Block
                     Data->IoStatus.Status = STATUS_ACCESS_DENIED;

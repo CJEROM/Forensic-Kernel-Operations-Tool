@@ -329,6 +329,16 @@ Return Value:
     return 0;
 }
 
+BOOL ResolveDriveLetterToDevicePath(
+    WCHAR driveLetter,        // e.g., 'C'
+    WCHAR* outDevicePath,     // Output buffer
+    DWORD maxLen              // In characters
+)
+{
+    WCHAR dosDevice[3] = { driveLetter, L':', L'\0' };
+    return QueryDosDeviceW(dosDevice, outDevicePath, maxLen);
+}
+
 DWORD
 SendActiveRulesToKernel(
     _In_ HANDLE filterPort
@@ -367,7 +377,18 @@ SendActiveRulesToKernel(
         ULONG action = (ULONG)sqlite3_column_int(stmt, 1);
         ULONG ruleType = (ULONG)sqlite3_column_int(stmt, 2);
         ULONG ruleTarget = (ULONG)sqlite3_column_int(stmt, 3);
-        const char* ruleAnsi = (const char*)sqlite3_column_text(stmt, 4);
+        //Makes sure that rule for file path translates C:\Users\Public\text.txt to \Device\HarddiskVolumeX\Users\Public\text.txt
+        const char* originalAnsi = (const char*)sqlite3_column_text(stmt, 4);
+        char ruleBuffer[MAX_PATH] = { 0 };
+        const char* ruleAnsi = originalAnsi;
+
+        if (ruleTarget == 0 && originalAnsi[1] == ':' && originalAnsi[2] == '\\') {
+            WCHAR devicePath[MAX_PATH] = { 0 };
+            if (ResolveDriveLetterToDevicePath(originalAnsi[0], devicePath, MAX_PATH)) {
+                snprintf(ruleBuffer, MAX_PATH, "%ws%s", devicePath, &originalAnsi[2]);
+                ruleAnsi = ruleBuffer;
+            }
+        }
 
         // Convert RuleString to wide char
         WCHAR ruleString[MAX_RULE_STRING_LENGTH] = { 0 };

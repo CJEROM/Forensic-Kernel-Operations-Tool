@@ -29,6 +29,8 @@ Environment:
 #include <wsk.h>
 #endif
 
+#include <fltkernel.h>
+
 //---------------------------------------------------------------------------
 //  Assign text sections for each routine.
 //---------------------------------------------------------------------------
@@ -261,41 +263,6 @@ FreeAllKernelRules(VOID)
     KeReleaseSpinLock(&MiniSpyData.RuleListLock, oldIrql);
 }
 
-BOOLEAN
-TranslateFileNameInformation(
-    _In_ PFLT_FILE_NAME_INFORMATION nameInfo,
-    _Out_ PUNICODE_STRING translatedPath
-)
-{
-    UNICODE_STRING dosName;
-    NTSTATUS status = FltGetDosName(nameInfo->Volume, &dosName);
-    if (!NT_SUCCESS(status)) {
-        return FALSE;
-    }
-
-    USHORT remainingLength;
-    WCHAR* remainingPath;
-
-    // Remove the volume prefix from nameInfo->Name
-    remainingLength = nameInfo->Name.Length - nameInfo->Volume.Length;
-    remainingPath = nameInfo->Name.Buffer + (nameInfo->Volume.Length / sizeof(WCHAR));
-
-    // Allocate and build the translated string
-    translatedPath->Length = 0;
-    translatedPath->MaximumLength = dosName.Length + remainingLength;
-    translatedPath->Buffer = ExAllocatePoolWithTag(NonPagedPoolNx, translatedPath->MaximumLength, 'phtR');
-
-    if (translatedPath->Buffer) {
-        RtlCopyMemory(translatedPath->Buffer, dosName.Buffer, dosName.Length);
-        //Copy into memory location just after the dos name for the volume, to but the remaining file path
-        RtlCopyMemory((PCHAR)translatedPath->Buffer + dosName.Length,
-            remainingPath, remainingLength);
-        translatedPath->Length = translatedPath->MaximumLength;
-    }
-
-    return TRUE;
-}
-
 PRULE_DATA
 FindMatchingRule(
     _In_ PFLT_FILE_NAME_INFORMATION nameInfo
@@ -337,22 +304,15 @@ FindMatchingRule(
             }
         }
 
-        
-
-        // For Rule Target = File Operation (1)
+        // For Rule Target = File Operation (0)
         if (rule->RuleTarget == 0) {
-            UNICODE_STRING ruleFilePath = { 0 };
-            if (TranslateFileNameInformation(nameInfo, &ruleFilePath)) {
-                if (FsRtlIsNameInExpression((PCUNICODE_STRING)&rule->RuleString, &ruleFilePath, TRUE, NULL)) {
-                    ExFreePoolWithTag(ruleFilePath.Buffer, 'phtR');
-                    if (gotProcessPath) RtlFreeUnicodeString(processPath);
-                    KeReleaseSpinLock(&MiniSpyData.RuleListLock, oldIrql);
-                    return rule;
-                }
-                ExFreePoolWithTag(ruleFilePath.Buffer, 'phtR');
+            if (FsRtlIsNameInExpression((PCUNICODE_STRING)&rule->RuleString, &nameInfo->Name, TRUE, NULL)) {
+                if (gotProcessPath) RtlFreeUnicodeString(processPath);
+                KeReleaseSpinLock(&MiniSpyData.RuleListLock, oldIrql);
+                return rule;
             }
         }
-        // For Rule Target = Process (0)
+        // For Rule Target = Process (1)
         else if (rule->RuleTarget == 1) {
             if (gotProcessPath && FsRtlIsNameInExpression((PCUNICODE_STRING)&rule->RuleString, &currentProcessPath, TRUE, NULL)) {
                 RtlFreeUnicodeString(processPath);
