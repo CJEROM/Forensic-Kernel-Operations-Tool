@@ -151,7 +151,7 @@ typedef struct _RECORD_DATA {
 typedef struct _RULE_DATA {
 
     ULONG RuleID;        // The id of the rule that gets passed along.
-    ULONG Action;        // 0 = ignore, 1 = alert, 2 = block
+    ULONG Action;        // 0 = nothing, 1 = ignore, 2 = alert, 3 = block | -1 = failed rule (in logs)
     ULONG RuleType;      // 0 = hash, 1 = path, 2 = extension
     ULONG RuleTarget;    // 0 = operation file name target, 1 = process
     ULONG RuleLength;    // Length in bytes of RuleString (including null terminator)
