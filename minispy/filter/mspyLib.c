@@ -261,6 +261,121 @@ FreeAllKernelRules(VOID)
     KeReleaseSpinLock(&MiniSpyData.RuleListLock, oldIrql);
 }
 
+BOOLEAN
+TranslateFileNameInformation(
+    _In_ PFLT_FILE_NAME_INFORMATION nameInfo,
+    _Out_ PUNICODE_STRING translatedPath
+)
+{
+    UNICODE_STRING dosName;
+    NTSTATUS status = FltGetDosName(nameInfo->Volume, &dosName);
+    if (!NT_SUCCESS(status)) {
+        return FALSE;
+    }
+
+    USHORT remainingLength;
+    WCHAR* remainingPath;
+
+    // Remove the volume prefix from nameInfo->Name
+    remainingLength = nameInfo->Name.Length - nameInfo->Volume.Length;
+    remainingPath = nameInfo->Name.Buffer + (nameInfo->Volume.Length / sizeof(WCHAR));
+
+    // Allocate and build the translated string
+    translatedPath->Length = 0;
+    translatedPath->MaximumLength = dosName.Length + remainingLength;
+    translatedPath->Buffer = ExAllocatePoolWithTag(NonPagedPoolNx, translatedPath->MaximumLength, 'phtR');
+
+    if (translatedPath->Buffer) {
+        RtlCopyMemory(translatedPath->Buffer, dosName.Buffer, dosName.Length);
+        //Copy into memory location just after the dos name for the volume, to but the remaining file path
+        RtlCopyMemory((PCHAR)translatedPath->Buffer + dosName.Length,
+            remainingPath, remainingLength);
+        translatedPath->Length = translatedPath->MaximumLength;
+    }
+
+    return TRUE;
+}
+
+PRULE_DATA
+FindMatchingRule(
+    _In_ PFLT_FILE_NAME_INFORMATION nameInfo
+)
+{
+    KIRQL oldIrql;
+    PLIST_ENTRY link;
+    PRULE_LIST ruleEntry;
+
+    // Pointer to hold the current process path (retrieved only if needed)
+    PUNICODE_STRING processPath = NULL;
+    UNICODE_STRING currentProcessPath = { 0 };
+    BOOLEAN gotProcessPath = FALSE;
+    BOOLEAN failedProcessPath = FALSE;
+
+    //In case we don't match a rule we return this.
+    static RULE_DATA emptyRule = { 0 };
+
+    //Set rule to match later
+    PRULE_DATA rule;
+    BOOLEAN finalRule = FALSE;
+
+    // Acquire the rule list spin lock for safe access
+    KeAcquireSpinLock(&MiniSpyData.RuleListLock, &oldIrql);
+
+    // Walk through each rule in the MiniSpy rule list
+    for (link = MiniSpyData.RuleList.Flink; link != &MiniSpyData.RuleList; link = link->Flink) {
+
+        //Set current rule we are looking at
+        ruleEntry = CONTAINING_RECORD(link, RULE_LIST, List);
+        rule = &ruleEntry->Rule.Data;
+
+        // Lazy-load the process path only if we encounter a rule targeting process paths and we haven't loaded the process path before.
+        if (rule->RuleTarget == 1 && !gotProcessPath) {
+            // Retrieve the full path to the current process image
+            if (NT_SUCCESS(SeLocateProcessImageName(PsGetCurrentProcess(), &processPath))) {
+                currentProcessPath = *processPath;
+                gotProcessPath = TRUE;
+            }
+        }
+
+        
+
+        // For Rule Target = File Operation (1)
+        if (rule->RuleTarget == 0) {
+            UNICODE_STRING ruleFilePath = { 0 };
+            if (TranslateFileNameInformation(nameInfo, &ruleFilePath)) {
+                if (FsRtlIsNameInExpression((PCUNICODE_STRING)&rule->RuleString, &ruleFilePath, TRUE, NULL)) {
+                    ExFreePoolWithTag(ruleFilePath.Buffer, 'phtR');
+                    if (gotProcessPath) RtlFreeUnicodeString(processPath);
+                    KeReleaseSpinLock(&MiniSpyData.RuleListLock, oldIrql);
+                    return rule;
+                }
+                ExFreePoolWithTag(ruleFilePath.Buffer, 'phtR');
+            }
+        }
+        // For Rule Target = Process (0)
+        else if (rule->RuleTarget == 1) {
+            if (gotProcessPath && FsRtlIsNameInExpression((PCUNICODE_STRING)&rule->RuleString, &currentProcessPath, TRUE, NULL)) {
+                RtlFreeUnicodeString(processPath);
+                KeReleaseSpinLock(&MiniSpyData.RuleListLock, oldIrql);
+                return rule;
+            }
+        }
+
+        // TODO: Extend this block in the future if RuleType == 0 (hash) is implemented
+    }
+
+    // Release spinlock
+    KeReleaseSpinLock(&MiniSpyData.RuleListLock, oldIrql);
+
+    // Free process path string if it was retrieved
+    if (gotProcessPath) {
+        RtlFreeUnicodeString(processPath);
+    }
+
+    // No rule matched - pass placeholder values.
+    return &emptyRule;
+}
+
 //---------------------------------------------------------------------------
 //                    Logging routines
 //---------------------------------------------------------------------------
@@ -1098,7 +1213,7 @@ VOID
 SpyLogPreOperationData (
     _In_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
-    _In_ INT BlockingRuleID,
+    _In_ PRULE_DATA ruleTriggered,
     _Inout_ PRECORD_LIST RecordList
     )
 /*++
@@ -1162,7 +1277,8 @@ Return Value:
     recordData->Arg6.QuadPart = Data->Iopb->Parameters.Others.Argument6.QuadPart;
 
     recordData->RequestorMode = Data->RequestorMode;
-    recordData->BlockingRuleID = BlockingRuleID;
+    recordData->BlockingRuleID = ruleTriggered->RuleID;
+    recordData->RuleAction = ruleTriggered->Action;
 
     KeQuerySystemTime( &recordData->OriginatingTime );
 }

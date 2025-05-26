@@ -735,8 +735,7 @@ Return Value:
     PUNICODE_STRING nameToUse;
     NTSTATUS status;
 
-    //
-    INT blockingRuleID = 0;
+    PRULE_DATA matchedRule;
 
 #if MINISPY_VISTA
 
@@ -808,55 +807,15 @@ Return Value:
                 FLT_ASSERT( NT_SUCCESS( FltParseFileNameInformation( nameInfo ) ) );
 
 #else
-
-                FltParseFileNameInformation( nameInfo );
                 
-                BOOLEAN blockProcess;
-                //Check what MajorFunction this process belongs to and whether it is one we are monitoring for blocking
-                blockProcess = (
-                    Data->Iopb->MajorFunction == IRP_MJ_CREATE ||
-                    Data->Iopb->MajorFunction == IRP_MJ_CLOSE ||
-                    Data->Iopb->MajorFunction == IRP_MJ_READ ||
-                    Data->Iopb->MajorFunction == IRP_MJ_WRITE ||
-                    Data->Iopb->MajorFunction == IRP_MJ_QUERY_INFORMATION ||
-                    Data->Iopb->MajorFunction == IRP_MJ_SET_INFORMATION
-                    );
+                FltParseFileNameInformation( nameInfo );
 
-                //  If the major operation is one we need to enforce block list on (File operation)
-                if (blockProcess) {
-                    /*BOOLEAN blockOperatation;*/
-
-                    //// For extension - check what needs to be done (Ignore, Alert, Block)
-                    //if (ExtensionAction(nameInfo->Extension)) {
-                    //    // set appropriate STATUS_ACCESS_DENIED or cancel the operation
-                    //}
-
-                    ////Get volume, figure out if this is in the volume we have rules for
-                    //if (EnforcedVolume(nameInfo->Volume)) {
-                    //    // For extension - check what needs to be done (Ignore, Alert, Block)
-                    //    if (FilePathAction(nameInfo->ParentDir)) {
-                    //        // set appropriate STATUS_ACCESS_DENIED or cancel the operation
-                    //    }
-                    //}
-                    //PRECORD_LIST recordList = SpyNewRecord();
-                    
-
-                    //If the operations should be blocked
-                    //Since we won't carry into post operation call back, we need to set it to log here 
-                    
-                    //  Then run the process that could get blocked, passing parsed 
-                    //  file data in return
-                    //PCUNICODE_STRING blockedExt = ".longfilename";
-                    //if (RtlEqualUnicodeString(&nameInfo->Extension, &blockedExt, TRUE)) {
-                    //    // Block files with this extension
-                    //}
-                    //PCUNICODE_STRING protectedPath = "C:/File/";
-                    //if (FsRtlIsNameInExpression(&protectedPath, &nameInfo->ParentDir, TRUE, NULL)) {
-                    //    // Trigger alert or block, for specific file path
-                    //}
-
-                    //Then if this operation falls under ones we need to block then block and pass in the rule that caused it to be blocked
-                   
+                //Find if the operation is targeted by any rules, and return the rule, triggering it
+                matchedRule = FindMatchingRule(nameInfo, NULL); 
+                // Set values for blocked operation.
+                if (matchedRule && matchedRule->Action == 3) { // Block
+                    Data->IoStatus.Status = STATUS_ACCESS_DENIED;
+                    Data->IoStatus.Information = 0;
                 }
 #endif
 
@@ -1033,12 +992,24 @@ Return Value:
         //  Set all of the operation information into the record
         //
 
-        SpyLogPreOperationData( Data, FltObjects, blockingRuleID, recordList);
+        SpyLogPreOperationData( Data, FltObjects, matchedRule, recordList);
 
         //
         //  Pass the record to our completions routine and return that
         //  we want our completion routine called.
         //
+
+        if (matchedRule && matchedRule->Action == 3) { //If we blocked the operation
+
+            //Do the logging now, since we won't go into post operation.
+
+            SpyPostOperationCallback(Data,
+                FltObjects,
+                recordList,
+                0);
+
+            returnStatus = FLT_PREOP_COMPLETE;
+        }
 
         if (Data->Iopb->MajorFunction == IRP_MJ_SHUTDOWN) {
 
