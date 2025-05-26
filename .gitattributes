@@ -61,3 +61,12 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# Extra things that are not important
+*.vcxproj.user
+*.sdf
+*.opensdf
+*.ipch/
+# Removes built programs in minispy folder
+minispy/user/x64
+minispy/filter/x64
