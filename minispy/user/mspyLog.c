@@ -339,7 +339,7 @@ SendActiveRulesToKernel(
 
     
     DWORD bytesReturned = 0;
-    const char* query = "SELECT RuleID, Action, RuleType, RuleTarget, RuleString FROM Rules WHERE Active=1 AND Deleted=0";
+    const char* query = "SELECT RuleID, Action, RuleType, RuleTarget, RuleString FROM Rules WHERE Active=1 AND Deleted=0 ORDER BY Action DESC";
 
     int rc = sqlite3_open(DATABASE_FILE_LOCATION, &db);
     if (rc != SQLITE_OK) return 1;
