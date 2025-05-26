@@ -421,7 +421,7 @@ Return Value:
 --*/
 {
     MINISPY_COMMAND command;
-    NTSTATUS status;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;;
 
     PAGED_CODE();
 
@@ -592,7 +592,7 @@ Return Value:
                 }
 
                 // Basic safety check: InputBuffer must be large enough to at least hold the COMMAND_MESSAGE header.
-                if (InputBuffer == NULL || InputBufferSize < FIELD_OFFSET(COMMAND_MESSAGE, Data)) {
+                if (InputBuffer == NULL || InputBufferSize < (ULONG)FIELD_OFFSET(COMMAND_MESSAGE, Data)) {
                     status = STATUS_INVALID_PARAMETER;
                     break;
                 }
@@ -735,7 +735,7 @@ Return Value:
     PUNICODE_STRING nameToUse;
     NTSTATUS status;
 
-    PRULE_DATA matchedRule;
+    PRULE_DATA matchedRule = { 0 };
 
 #if MINISPY_VISTA
 
@@ -811,7 +811,7 @@ Return Value:
                 FltParseFileNameInformation( nameInfo );
 
                 //Find if the operation is targeted by any rules, and return the rule, triggering it
-                matchedRule = FindMatchingRule(&nameInfo); 
+                matchedRule = FindMatchingRule(nameInfo); 
                 // Set values for blocked operation.
                 if (matchedRule && matchedRule->Action == 3) { // Block
                     Data->IoStatus.Status = STATUS_ACCESS_DENIED;

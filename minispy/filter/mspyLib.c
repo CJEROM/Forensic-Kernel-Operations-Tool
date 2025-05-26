@@ -20,6 +20,8 @@ Environment:
 
 #include "mspyKern.h"
 
+#include <ntifs.h>
+
 //
 // Can't pull in wsk.h until after MINISPY_VISTA is defined
 //
@@ -28,8 +30,6 @@ Environment:
 #include <ntifs.h>
 #include <wsk.h>
 #endif
-
-#include <fltkernel.h>
 
 //---------------------------------------------------------------------------
 //  Assign text sections for each routine.
@@ -265,7 +265,7 @@ FreeAllKernelRules(VOID)
 
 PRULE_DATA
 FindMatchingRule(
-    _In_ PFLT_FILE_NAME_INFORMATION nameInfo
+    _In_ PFLT_FILE_NAME_INFORMATION fileInformation
 )
 {
     KIRQL oldIrql;
@@ -274,16 +274,13 @@ FindMatchingRule(
 
     // Pointer to hold the current process path (retrieved only if needed)
     PUNICODE_STRING processPath = NULL;
-    UNICODE_STRING currentProcessPath = { 0 };
     BOOLEAN gotProcessPath = FALSE;
-    BOOLEAN failedProcessPath = FALSE;
 
     //In case we don't match a rule we return this.
     static RULE_DATA emptyRule = { 0 };
 
     //Set rule to match later
     PRULE_DATA rule;
-    BOOLEAN finalRule = FALSE;
 
     // Acquire the rule list spin lock for safe access
     KeAcquireSpinLock(&MiniSpyData.RuleListLock, &oldIrql);
@@ -299,14 +296,18 @@ FindMatchingRule(
         if (rule->RuleTarget == 1 && !gotProcessPath) {
             // Retrieve the full path to the current process image
             if (NT_SUCCESS(SeLocateProcessImageName(PsGetCurrentProcess(), &processPath))) {
-                currentProcessPath = *processPath;
                 gotProcessPath = TRUE;
             }
         }
 
+        UNICODE_STRING rulePattern;
+        RtlInitUnicodeString(&rulePattern, rule->RuleString);
+
         // For Rule Target = File Operation (0)
         if (rule->RuleTarget == 0) {
-            if (FsRtlIsNameInExpression((PCUNICODE_STRING)&rule->RuleString, &nameInfo->Name, TRUE, NULL)) {
+            
+
+            if (FsRtlIsNameInExpression(&rulePattern, &fileInformation->Name, TRUE, NULL)) {
                 if (gotProcessPath) RtlFreeUnicodeString(processPath);
                 KeReleaseSpinLock(&MiniSpyData.RuleListLock, oldIrql);
                 return rule;
@@ -314,7 +315,8 @@ FindMatchingRule(
         }
         // For Rule Target = Process (1)
         else if (rule->RuleTarget == 1) {
-            if (gotProcessPath && FsRtlIsNameInExpression((PCUNICODE_STRING)&rule->RuleString, &currentProcessPath, TRUE, NULL)) {
+
+            if (gotProcessPath && FsRtlIsNameInExpression(&rulePattern, processPath, TRUE, NULL)) {
                 RtlFreeUnicodeString(processPath);
                 KeReleaseSpinLock(&MiniSpyData.RuleListLock, oldIrql);
                 return rule;

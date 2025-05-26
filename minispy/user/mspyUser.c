@@ -739,15 +739,15 @@ Return Value:
                 printf("Reloading rules from database...\n");
                 WriteAlertToDatabase("Reloading rules from database...");
 
-                DWORD result = SendActiveRulesToKernel(Context->Port);
+                DWORD sendSuccess = SendActiveRulesToKernel(Context->Port);
 
-                if (result == 0) {
+                if (sendSuccess == 0) {
                     printf("Rules sent to kernel successfully.\n");
                     WriteAlertToDatabase("Rules sent to kernel successfully.");
                 }
                 else {
-                    printf("Failed to send rules to kernel (error %lu).\n", result);
-                    WriteAlertToDatabase("Failed to send rules to kernel (error %lu).\n", result);
+                    printf("Failed to send rules to kernel (error %lu).\n", sendSuccess);
+                    WriteAlertToDatabase("Failed to send rules to kernel (error %lu).\n", sendSuccess);
                 }
 
                 break;
@@ -758,9 +758,9 @@ Return Value:
                 printf("Clearing Rules in Kernel...\n");
                 WriteAlertToDatabase("Clearing Rules in Kernel...");
 
-                DWORD result = ClearRulesInKernel(Context->Port);
+                DWORD clearSuccess = ClearRulesInKernel(Context->Port);
 
-                if (result == 0) {
+                if (clearSuccess == 0) {
                     printf("Cleared kernel rules.\n");
                     WriteAlertToDatabase("Cleared kernel rules.");
                 }
