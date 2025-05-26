@@ -340,6 +340,11 @@ FreeAllKernelRules(
     VOID
     );
 
+PRULE_DATA
+FindMatchingRule(
+    _In_ PFLT_FILE_NAME_INFORMATION nameInfo
+    );
+
 //---------------------------------------------------------------------------
 //  Logging routines
 //---------------------------------------------------------------------------
@@ -390,7 +395,7 @@ VOID
 SpyLogPreOperationData (
     _In_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
-    _In_ INT BlockingRuleID,
+    _In_ PRULE_DATA ruleTriggered,
     _Inout_ PRECORD_LIST RecordList
     );
 
