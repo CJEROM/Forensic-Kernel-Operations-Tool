@@ -735,7 +735,7 @@ Return Value:
     PUNICODE_STRING nameToUse;
     NTSTATUS status;
 
-    PRULE_DATA matchedRule = { 0 };
+    PRULE_DATA matchedRule = NULL;
 
 #if MINISPY_VISTA
 

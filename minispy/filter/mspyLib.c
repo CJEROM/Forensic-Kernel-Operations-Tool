@@ -278,7 +278,10 @@ FindMatchingRule(
 
     //In case we don't match a rule we return this.
     static RULE_DATA emptyRule = { 0 };
-
+    emptyRule.Action = 0;
+    emptyRule.RuleID = 0;
+    emptyRule.RuleTarget = 0;
+    emptyRule.RuleType = 0;
     //Set rule to match later
     PRULE_DATA rule;
 
