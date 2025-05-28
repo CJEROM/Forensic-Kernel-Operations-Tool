@@ -133,9 +133,6 @@ Return Value:
         InitializeListHead( &MiniSpyData.OutputBufferList );
         KeInitializeSpinLock( &MiniSpyData.OutputBufferLock );
 
-        InitializeListHead(&MiniSpyData.RuleList);
-        KeInitializeSpinLock(&MiniSpyData.RuleListLock);
-
         ExInitializeNPagedLookasideList( &MiniSpyData.FreeBufferList,
                                          NULL,
                                          NULL,
@@ -421,7 +418,7 @@ Return Value:
 --*/
 {
     MINISPY_COMMAND command;
-    NTSTATUS status = STATUS_UNSUCCESSFUL;;
+    NTSTATUS status;
 
     PAGED_CODE();
 
@@ -572,109 +569,6 @@ Return Value:
                 status = STATUS_SUCCESS;
                 break;
 
-            case UpdateRules:
-
-                //Checking for alignment for 32 bit applications on 64 bit systems (from above example)
-#if defined(_WIN64)
-                if (IoIs32bitProcess(NULL)) {
-                    if (!IS_ALIGNED(InputBuffer, sizeof(ULONG))) {
-                        status = STATUS_DATATYPE_MISALIGNMENT;
-                        break;
-                    }
-                }
-                else
-#endif
-                {
-                    if (!IS_ALIGNED(InputBuffer, sizeof(PVOID))) {
-                        status = STATUS_DATATYPE_MISALIGNMENT;
-                        break;
-                    }
-                }
-
-                // Basic safety check: InputBuffer must be large enough to at least hold the COMMAND_MESSAGE header.
-                if (InputBuffer == NULL || InputBufferSize < (ULONG)FIELD_OFFSET(COMMAND_MESSAGE, Data)) {
-                    status = STATUS_INVALID_PARAMETER;
-                    break;
-                }
-
-                // Wrap buffer access in a try/except to catch bad pointers or memory access issues.
-                try {
-
-                    // Clear old rules before inserting new ones
-                    FreeAllKernelRules();
-
-                    //
-                    // Cast the raw InputBuffer to a COMMAND_MESSAGE structure.
-                    // This gives us access to the Command field (already used earlier),
-                    // and the variable-length Data[] array, which contains the RULE_RECORDs.
-                    //
-
-                    PCOMMAND_MESSAGE cmdMsg = (PCOMMAND_MESSAGE)InputBuffer;
-
-                    // Get a pointer to the start of the actual RULE_RECORDs.
-                    PUCHAR ruleDataStart = (PUCHAR)cmdMsg->Data;
-
-                    // Calculate how much of the InputBuffer is available for rule records
-                    ULONG ruleDataSize = InputBufferSize - FIELD_OFFSET(COMMAND_MESSAGE, Data);
-
-                    // Offset pointer for walking through each RULE_RECORD.
-                    ULONG offset = 0;
-
-                    //Process each RULE_RECORD in the buffer one at a time.
-                    while (offset + sizeof(RULE_RECORD) <= ruleDataSize) {
-
-                        PRULE_RECORD ruleRec = (PRULE_RECORD)(ruleDataStart + offset);
-
-                        // Check that the record claims a valid size and doesn't overflow the buffer.
-                        if (ruleRec->Length < sizeof(RULE_RECORD) ||
-                            offset + ruleRec->Length > ruleDataSize) {
-                            status = STATUS_INVALID_PARAMETER;
-                            break;
-                        }
-
-                        // Validate that RuleLength (length of RuleString) is reasonable.
-                        if (ruleRec->Data.RuleLength == 0 ||
-                            ruleRec->Data.RuleLength > MAX_RULE_STRING_LENGTH * sizeof(WCHAR)) {
-                            status = STATUS_INVALID_PARAMETER;
-                            break;
-                        }
-
-                        // Ensure RuleString fits within the Length of the RULE_RECORD.
-                        ULONG requiredSize = sizeof(RULE_RECORD) - sizeof(WCHAR) + ruleRec->Data.RuleLength;
-                        if (ruleRec->Length < requiredSize) {
-                            status = STATUS_INVALID_PARAMETER;
-                            break;
-                        }
-
-                        //Check that RuleString is null-terminated.
-                        WCHAR* str = ruleRec->Data.RuleString;
-                        if (str[(ruleRec->Data.RuleLength / sizeof(WCHAR)) - 1] != L'\0') {
-                            status = STATUS_INVALID_PARAMETER;
-                            break;
-                        }
-
-                        // TODO: Could perhaps check rules string whether relevant to this instance of mini filter (volume attached to, before adding)
-                        AddToKernelRuleList(ruleRec);
-
-                        //Move to the next rule record, ensuring pointer stays aligned to sizeof(PVOID).
-                        offset += ROUND_TO_SIZE(ruleRec->Length, sizeof(PVOID));
-                    }
-
-                    status = (offset == 0) ? STATUS_INVALID_PARAMETER : STATUS_SUCCESS;
-
-                } except(SpyExceptionFilter(GetExceptionInformation(), TRUE)) {
-                    return GetExceptionCode();
-                }
-
-                break;
-
-            case ClearRules:
-
-                // Clear the rules stored in buffer.
-                FreeAllKernelRules();
-
-                break;
-
             default:
                 status = STATUS_INVALID_PARAMETER;
                 break;
@@ -735,7 +629,8 @@ Return Value:
     PUNICODE_STRING nameToUse;
     NTSTATUS status;
 
-    PRULE_DATA matchedRule = NULL;
+    //
+    INT blockingRuleID = 0;
 
 #if MINISPY_VISTA
 
@@ -807,15 +702,37 @@ Return Value:
                 FLT_ASSERT( NT_SUCCESS( FltParseFileNameInformation( nameInfo ) ) );
 
 #else
-                
-                FltParseFileNameInformation( nameInfo );
 
-                //Find if the operation is targeted by any rules, and return the rule, triggering it
-                matchedRule = FindMatchingRule(nameInfo); 
-                // Set values for blocked operation.
-                if (matchedRule && matchedRule->Action == 3) { // Block
-                    Data->IoStatus.Status = STATUS_ACCESS_DENIED;
-                    Data->IoStatus.Information = 0;
+                FltParseFileNameInformation( nameInfo );
+                
+                BOOLEAN blockProcess;
+                //Check what MajorFunction this process belongs to and whether it is one we are monitoring for blocking
+                blockProcess = (
+                    Data->Iopb->MajorFunction == IRP_MJ_CREATE ||
+                    Data->Iopb->MajorFunction == IRP_MJ_CLOSE ||
+                    Data->Iopb->MajorFunction == IRP_MJ_READ ||
+                    Data->Iopb->MajorFunction == IRP_MJ_WRITE ||
+                    Data->Iopb->MajorFunction == IRP_MJ_QUERY_INFORMATION ||
+                    Data->Iopb->MajorFunction == IRP_MJ_SET_INFORMATION
+                    );
+
+                //Do checks on file name to see whether it is valid
+
+                //  If the process is one we use to enforce block list
+                if (blockProcess) {
+                    //  Then run the process that could get blocked, passing parsed 
+                    //  file data in return
+                    //PCUNICODE_STRING blockedExt = ".longfilename";
+                    //if (RtlEqualUnicodeString(&nameInfo->Extension, &blockedExt, TRUE)) {
+                    //    // Block files with this extension
+                    //}
+                    //PCUNICODE_STRING protectedPath = "C:/File/";
+                    //if (FsRtlIsNameInExpression(&protectedPath, &nameInfo->ParentDir, TRUE, NULL)) {
+                    //    // Trigger alert or block, for specific file path
+                    //}
+
+                    //Then if this operation falls under ones we need to block then block and pass in the rule that caused it to be blocked
+
                 }
 #endif
 
@@ -992,24 +909,12 @@ Return Value:
         //  Set all of the operation information into the record
         //
 
-        SpyLogPreOperationData( Data, FltObjects, matchedRule, recordList);
+        SpyLogPreOperationData( Data, FltObjects, blockingRuleID, recordList);
 
         //
         //  Pass the record to our completions routine and return that
         //  we want our completion routine called.
         //
-
-        if (matchedRule && matchedRule->Action == 3) { //If we blocked the operation
-
-            //Do the logging now, since we won't go into post operation.
-
-            SpyPostOperationCallback(Data,
-                FltObjects,
-                recordList,
-                0);
-
-            returnStatus = FLT_PREOP_COMPLETE;
-        }
 
         if (Data->Iopb->MajorFunction == IRP_MJ_SHUTDOWN) {
 

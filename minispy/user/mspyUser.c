@@ -258,9 +258,6 @@ Return Value:
         }
     }
 
-    // If I want to send rules on startup
-    //SendActiveRulesToKernel(context.Port);
-
     //
     // Create the thread to read the log records that are gathered
     // by MiniSpy.sys.
@@ -733,44 +730,6 @@ Return Value:
                 }
                 break;
 
-            case 'r':
-            case 'R':
-
-                printf("Reloading rules from database...\n");
-                WriteAlertToDatabase("Reloading rules from database...");
-
-                DWORD sendSuccess = SendActiveRulesToKernel(Context->Port);
-
-                if (sendSuccess == 0) {
-                    printf("Rules sent to kernel successfully.\n");
-                    WriteAlertToDatabase("Rules sent to kernel successfully.");
-                }
-                else {
-                    printf("Failed to send rules to kernel (error %lu).\n", sendSuccess);
-                    WriteAlertToDatabase("Failed to send rules to kernel (error %lu).\n", sendSuccess);
-                }
-
-                break;
-
-            case 'c':
-            case 'C':
-
-                printf("Clearing Rules in Kernel...\n");
-                WriteAlertToDatabase("Clearing Rules in Kernel...");
-
-                DWORD clearSuccess = ClearRulesInKernel(Context->Port);
-
-                if (clearSuccess == 0) {
-                    printf("Cleared kernel rules.\n");
-                    WriteAlertToDatabase("Cleared kernel rules.");
-                }
-                else {
-                    printf("Failed to clear kernel rules");
-                    WriteAlertToDatabase("Failed to clear kernel rules");
-                }
-
-                break;
-
             default:
 
                 //
@@ -828,8 +787,6 @@ InterpretCommand_Usage:
     printf("Valid switches: [/a <drive>] [/d <drive>] [/l] [/s] [/f [<file name>]]\n"
            "    [/a <drive>] starts monitoring <drive>\n"
            "    [/d <drive> [<instance id>]] detaches filter <instance id> from <drive>\n"
-           "    [/r] Send updated list of rules to minifilter\n"
-           "    [/c] Clear rules stored in driver\n"
            "    [/l] lists all the drives the monitor is currently attached to\n"
            "    [/s] turns on and off showing logging output on the screen\n"
            "    [/f [<file name>]] turns on and off logging to the specified file\n"

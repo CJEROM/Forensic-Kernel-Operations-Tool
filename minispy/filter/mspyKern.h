@@ -150,13 +150,6 @@ typedef struct _MINISPY_DATA {
     LIST_ENTRY OutputBufferList;
 
     //
-    //  List of buffers with rule data to store in kernel
-    //
-
-    KSPIN_LOCK RuleListLock;
-    LIST_ENTRY RuleList;
-
-    //
     //  Lookaside list used for allocating buffers.
     //
 
@@ -327,25 +320,6 @@ SpyFreeBuffer (
     );
 
 //---------------------------------------------------------------------------
-//  Rule list allocation routines
-//---------------------------------------------------------------------------
-
-NTSTATUS
-AddToKernelRuleList(
-    _In_ const RULE_RECORD* rule
-    );
-
-VOID
-FreeAllKernelRules(
-    VOID
-    );
-
-PRULE_DATA
-FindMatchingRule(
-    _In_ PFLT_FILE_NAME_INFORMATION nameInfo
-    );
-
-//---------------------------------------------------------------------------
 //  Logging routines
 //---------------------------------------------------------------------------
 PRECORD_LIST
@@ -395,7 +369,7 @@ VOID
 SpyLogPreOperationData (
     _In_ PFLT_CALLBACK_DATA Data,
     _In_ PCFLT_RELATED_OBJECTS FltObjects,
-    _In_ PRULE_DATA ruleTriggered,
+    _In_ INT BlockingRuleID,
     _Inout_ PRECORD_LIST RecordList
     );
 

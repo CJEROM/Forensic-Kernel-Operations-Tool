@@ -94,6 +94,7 @@ Return Value:
     return FALSE;
 }
 
+
 DWORD
 WINAPI
 RetrieveLogRecords(
@@ -329,137 +330,6 @@ Return Value:
     return 0;
 }
 
-BOOL ResolveDriveLetterToDevicePath(
-    WCHAR driveLetter,        // e.g., 'C'
-    WCHAR* outDevicePath,     // Output buffer
-    DWORD maxLen              // In characters
-)
-{
-    WCHAR dosDevice[3] = { driveLetter, L':', L'\0' };
-    return QueryDosDeviceW(dosDevice, outDevicePath, maxLen);
-}
-
-DWORD
-SendActiveRulesToKernel(
-    _In_ HANDLE filterPort
-)
-{
-    sqlite3* db = NULL;
-    sqlite3_stmt* stmt = NULL;
-
-    
-    DWORD bytesReturned = 0;
-    const char* query = "SELECT RuleID, Action, RuleType, RuleTarget, RuleString FROM Rules WHERE Active=1 AND Deleted=0 ORDER BY Action DESC";
-
-    int rc = sqlite3_open(DATABASE_FILE_LOCATION, &db);
-    if (rc != SQLITE_OK) return 1;
-
-    rc = sqlite3_prepare_v2(db, query, -1, &stmt, NULL);
-    if (rc != SQLITE_OK) {
-        sqlite3_close(db);
-        return 2;
-    }
-
-    // Allocate buffer for rules (start with rough guess, grow if needed)
-    size_t bufferSize = 8192;
-    BYTE* sendBuffer = malloc(bufferSize);
-    if (!sendBuffer) return 3;
-
-    PCOMMAND_MESSAGE cmdMsg = (PCOMMAND_MESSAGE)sendBuffer;
-    cmdMsg->Command = UpdateRules;
-
-    BYTE* dataPtr = cmdMsg->Data;
-    size_t dataOffset = 0;
-
-    while ((rc = sqlite3_step(stmt)) == SQLITE_ROW) {
-
-        ULONG ruleID = (ULONG)sqlite3_column_int(stmt, 0);
-        ULONG action = (ULONG)sqlite3_column_int(stmt, 1);
-        ULONG ruleType = (ULONG)sqlite3_column_int(stmt, 2);
-        ULONG ruleTarget = (ULONG)sqlite3_column_int(stmt, 3);
-        //Makes sure that rule for file path translates C:\Users\Public\text.txt to \Device\HarddiskVolumeX\Users\Public\text.txt
-        const char* originalAnsi = (const char*)sqlite3_column_text(stmt, 4);
-        char ruleBuffer[MAX_PATH] = { 0 };
-        const char* ruleAnsi = originalAnsi;
-
-        if (ruleTarget == 0 && originalAnsi[1] == ':' && originalAnsi[2] == '\\') {
-            WCHAR devicePath[MAX_PATH] = { 0 };
-            if (ResolveDriveLetterToDevicePath(originalAnsi[0], devicePath, MAX_PATH)) {
-                snprintf(ruleBuffer, MAX_PATH, "%ws%s", devicePath, &originalAnsi[2]);
-                ruleAnsi = ruleBuffer;
-            }
-        }
-
-        // Convert RuleString to wide char
-        WCHAR ruleString[MAX_RULE_STRING_LENGTH] = { 0 };
-        int wlen = MultiByteToWideChar(CP_UTF8, 0, ruleAnsi, -1, ruleString, MAX_RULE_STRING_LENGTH);
-        if (wlen == 0) continue;
-
-        ULONG ruleStrLenBytes = (ULONG)(wlen * sizeof(WCHAR));
-        ULONG ruleSize = sizeof(RULE_RECORD) - sizeof(WCHAR) + ruleStrLenBytes;
-        ruleSize = ROUND_TO_SIZE(ruleSize, sizeof(PVOID));
-
-        if ((dataOffset + ruleSize) > (bufferSize - sizeof(COMMAND_MESSAGE))) {
-            // Reallocate
-            bufferSize *= 2;
-            sendBuffer = realloc(sendBuffer, bufferSize);
-            if (!sendBuffer) break;
-            cmdMsg = (PCOMMAND_MESSAGE)sendBuffer;
-            cmdMsg->Command = UpdateRules;
-            dataPtr = cmdMsg->Data + dataOffset;
-        }
-
-        PRULE_RECORD ruleRec = (PRULE_RECORD)(cmdMsg->Data + dataOffset);
-        ruleRec->Length = ruleSize;
-        ruleRec->Reserved = 0;
-        ruleRec->Data.RuleID = ruleID;
-        ruleRec->Data.Action = action;
-        ruleRec->Data.RuleType = ruleType;
-        ruleRec->Data.RuleTarget = ruleTarget;
-        ruleRec->Data.RuleLength = ruleStrLenBytes;
-        memcpy(ruleRec->Data.RuleString, ruleString, ruleStrLenBytes);
-
-        dataOffset += ruleSize;
-    }
-
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
-
-    size_t totalSendSize = FIELD_OFFSET(COMMAND_MESSAGE, Data) + dataOffset;
-
-    HRESULT hResult = FilterSendMessage(
-        filterPort,
-        sendBuffer,
-        (DWORD)totalSendSize,
-        NULL,
-        0,
-        &bytesReturned
-    );
-
-    free(sendBuffer);
-
-    return SUCCEEDED(hResult) ? 0 : 4;
-}
-
-DWORD
-ClearRulesInKernel(
-    _In_ HANDLE filterPort
-)
-{
-    COMMAND_MESSAGE commandMessage;
-    DWORD bytesReturned = 0;
-
-    commandMessage.Command = ClearRules;
-
-    HRESULT hResult = FilterSendMessage(filterPort,
-        &commandMessage,
-        sizeof(COMMAND_MESSAGE),
-        NULL,
-        0,
-        &bytesReturned);
-
-    return SUCCEEDED(hResult);
-}
 
 VOID
 PrintIrpCode(
@@ -1372,7 +1242,7 @@ Return Value:
     //Set what rule then blocked the operation if it was (from the block list)
     sqlite3_bind_int(stmt, 24, RecordData->BlockingRuleID);
 
-    sqlite3_bind_int(stmt, 25, RecordData->RuleAction);
+    sqlite3_bind_int(stmt, 25, 0);
 
     //Execute insert command
     if (sqlite3_step(stmt) != SQLITE_DONE) {
