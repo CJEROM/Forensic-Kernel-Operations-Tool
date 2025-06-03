@@ -23,7 +23,7 @@ Environment:
 #include <fltUser.h>
 #include "minispy.h"
 
-#define BUFFER_SIZE     8196
+#define BUFFER_SIZE     (64 * 1024) //64 KB - user mode memory
 
 #define DATABASE_FILE_LOCATION "C:\\Users\\Public\\log.db"
 #define USER_LOG_FILE "C:\\Users\\Public\\MySimpleCService.log"

@@ -32,7 +32,7 @@ _Analysis_mode_(_Analysis_code_type_user_code_)
 #define TIME_BUFFER_LENGTH 20
 #define TIME_ERROR         "time error"
 
-#define POLL_INTERVAL   100     // 200 milliseconds
+#define POLL_INTERVAL   200     // 200 milliseconds
 
 BOOLEAN
 TranslateFileTag(
@@ -1102,6 +1102,8 @@ Return Value:
 
     int rc = sqlite3_open(DATABASE_FILE_LOCATION, &db);
     if (rc != SQLITE_OK) return;
+
+    //sqlite3_exec(db, "PRAGMA journal_mode=WAL;", 0, 0, 0);
 
     // Set insert statement
     char* sql = "INSERT INTO MinifilterLog (SeqNum, OprType, PreOpTime, PostOpTime, ProcessId, ProcessFilePath, ThreadId, MajorOp, MinorOp, IrpFlags, DeviceObj, FileObj, FileTransaction, OpStatus, Information, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, OpFileName, RequestorMode, RuleID, RuleAction) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";;

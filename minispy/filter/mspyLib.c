@@ -160,6 +160,7 @@ Return Value:
             InterlockedDecrement( &MiniSpyData.RecordsAllocated );
 
             newRecordType = RECORD_TYPE_FLAG_OUT_OF_MEMORY;
+            DbgPrint("Failed to allocated memory\n");
         }
 
     } else {
@@ -258,6 +259,9 @@ Return Value:
 
             newRecord = (PRECORD_LIST)MiniSpyData.OutOfMemoryBuffer;
             initialRecordType |= RECORD_TYPE_FLAG_STATIC;
+        }
+        else {
+            return NULL;
         }
     }
 

@@ -233,7 +233,7 @@ Return Value:
     context.LogToFile = FALSE;
     context.LogToScreen = FALSE;        //don't start logging yet
     context.NextLogToScreen = TRUE;
-    context.OutputFile = FALSE;
+    context.OutputFile = NULL;
 
     if (context.ShutDown == NULL) {
 
@@ -707,18 +707,6 @@ Return Value:
 
                 } else {
 
-                    parmIndex++;
-
-                    if (parmIndex >= argc) {
-
-                        //
-                        // Not enough parameters
-                        //
-
-                        goto InterpretCommand_Usage;
-                    }
-
-                    parm = argv[parmIndex];
                     printf( "    Log to file %s\n", parm );
                     WriteAlertToDatabase("Enable logging kernel operations to database file");
                     
@@ -789,7 +777,7 @@ InterpretCommand_Usage:
            "    [/d <drive> [<instance id>]] detaches filter <instance id> from <drive>\n"
            "    [/l] lists all the drives the monitor is currently attached to\n"
            "    [/s] turns on and off showing logging output on the screen\n"
-           "    [/f [<file name>]] turns on and off logging to the specified file\n"
+           "    [/f] turns on and off logging to database at C:/Users/Public/log.db\n"
            "  If you are in command mode:\n"
            "    [enter] will enter command mode\n"
            "    [go|g] will exit command mode\n"

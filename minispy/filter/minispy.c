@@ -705,35 +705,7 @@ Return Value:
 
                 FltParseFileNameInformation( nameInfo );
                 
-                BOOLEAN blockProcess;
-                //Check what MajorFunction this process belongs to and whether it is one we are monitoring for blocking
-                blockProcess = (
-                    Data->Iopb->MajorFunction == IRP_MJ_CREATE ||
-                    Data->Iopb->MajorFunction == IRP_MJ_CLOSE ||
-                    Data->Iopb->MajorFunction == IRP_MJ_READ ||
-                    Data->Iopb->MajorFunction == IRP_MJ_WRITE ||
-                    Data->Iopb->MajorFunction == IRP_MJ_QUERY_INFORMATION ||
-                    Data->Iopb->MajorFunction == IRP_MJ_SET_INFORMATION
-                    );
-
-                //Do checks on file name to see whether it is valid
-
-                //  If the process is one we use to enforce block list
-                if (blockProcess) {
-                    //  Then run the process that could get blocked, passing parsed 
-                    //  file data in return
-                    //PCUNICODE_STRING blockedExt = ".longfilename";
-                    //if (RtlEqualUnicodeString(&nameInfo->Extension, &blockedExt, TRUE)) {
-                    //    // Block files with this extension
-                    //}
-                    //PCUNICODE_STRING protectedPath = "C:/File/";
-                    //if (FsRtlIsNameInExpression(&protectedPath, &nameInfo->ParentDir, TRUE, NULL)) {
-                    //    // Trigger alert or block, for specific file path
-                    //}
-
-                    //Then if this operation falls under ones we need to block then block and pass in the rule that caused it to be blocked
-
-                }
+                //BOOLEAN blockProcess;
 #endif
 
             }
@@ -760,8 +732,6 @@ Return Value:
                                                      FLT_FILE_NAME_OPENED |
                                                             FLT_FILE_NAME_QUERY_ALWAYS_ALLOW_CACHE_LOOKUP,
                                                      &lnameInfo );
-
-                //CHECKS WOULD BE IMPORTANT HERE TO CHECK WHETHER ANY OTHER TYPES OF FILE NAMES HAVE GONE WRONG BUT THAT'S WHERE MACHINE LEARNING WOULD BE USEFUL
 
 
                 if (NT_SUCCESS(lstatus)) {
