@@ -242,19 +242,7 @@ Return Value:
                 }
             }
 
-            if (context->LogToScreen) {
-
-                /*ScreenDump( pLogRecord->SequenceNumber,
-                            pLogRecord->Name,
-                            pRecordData );*/
-            }
-
             if (context->LogToFile) {
-
-                /*FileDump( pLogRecord->SequenceNumber,
-                          pLogRecord->Name,
-                          pRecordData,
-                          context->OutputFile );*/
 
                 DatabaseDump(
                     pLogRecord->SequenceNumber,
@@ -279,9 +267,6 @@ Return Value:
 
                 if (context->LogToFile) {
 
-                    fprintf( context->OutputFile,
-                             "M:\t0x%08X\tSystem Out of Memory\n",
-                             pLogRecord->SequenceNumber );
                     WriteAlertToDatabase("M:\t0x%08X\tSystem Out of Memory", pLogRecord->SequenceNumber);
                 }
 
@@ -295,9 +280,6 @@ Return Value:
 
                 if (context->LogToFile) {
 
-                    fprintf( context->OutputFile,
-                             "M:\t0x%08X\tExceeded Mamimum Allowed Memory Buffers\n",
-                             pLogRecord->SequenceNumber );
                     WriteAlertToDatabase("M:\t0x%08X\tExceeded Mamimum Allowed Memory Buffers", pLogRecord->SequenceNumber);
                 }
             }
@@ -1059,7 +1041,7 @@ WriteAlertToDatabase(
         const char* errorMsg = sqlite3_errmsg(db);
         char logMessage[512];
         snprintf(logMessage, sizeof(logMessage), "SQLite insert failed on Alert: %s", errorMsg);
-        WriteToLogAnsi(logMessage);
+        WriteAlertToDatabase(logMessage);
     }
 
     //Clean up

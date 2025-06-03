@@ -105,6 +105,7 @@ Return Value:
             //
 
             printf("    Could not translate error: %d\n", Code);
+            WriteAlertToDatabase("Could not translate error: %d", Code);
             return;
         }
 
@@ -116,6 +117,7 @@ Return Value:
         if (status != S_OK) {
 
             printf("    Could not translate error: %d\n", Code);
+            WriteAlertToDatabase("Could not translate error: %d", Code);
             return;
         }
 
@@ -519,6 +521,8 @@ Return Value:
                 printf( "    Attaching to %s... ", parm );
                 WriteAlertToDatabase("Attaching to %s... ", parm);
 
+                Context->LogToFile = TRUE;
+
                 bufferLength = MultiByteToWideChar( CP_ACP,
                                                     MB_ERR_INVALID_CHARS,
                                                     parm,
@@ -669,55 +673,6 @@ Return Value:
                 ListDevices();
                 break;
 
-            case 's':
-            case 'S':
-
-                //
-                // Output logging results to screen, save new value to
-                // instate when command interpreter is exited.
-                //
-                if (Context->NextLogToScreen) {
-
-                    printf( "    Turning off logging to screen\n" );
-
-                } else {
-
-                    printf( "    Turning on logging to screen\n" );
-                }
-
-                Context->NextLogToScreen = !Context->NextLogToScreen;
-                break;
-
-            case 'f':
-            case 'F':
-
-                //
-                // Output logging results to file
-                //
-
-                if (Context->LogToFile) {
-
-                    printf( "    Stop logging to file \n" );
-                    WriteAlertToDatabase("Stop logging kernel operations to database file");
-                    Context->LogToFile = FALSE;
-                    /*assert( Context->OutputFile );
-                    _Analysis_assume_( Context->OutputFile != NULL );
-                    fclose( Context->OutputFile );
-                    Context->OutputFile = NULL;*/
-
-                } else {
-
-                    printf( "    Log to file %s\n", parm );
-                    WriteAlertToDatabase("Enable logging kernel operations to database file");
-                    
-                    /*if (fopen_s( &Context->OutputFile, parm, "w" ) != 0 ) {
-                        assert( Context->OutputFile );
-                    }*/
-                    
-                    Context->LogToFile = TRUE;
-                }
-                break;
-
             default:
 
                 //
@@ -772,12 +727,11 @@ InterpretCommand_Exit:
     return returnValue;
 
 InterpretCommand_Usage:
-    printf("Valid switches: [/a <drive>] [/d <drive>] [/l] [/s] [/f [<file name>]]\n"
-           "    [/a <drive>] starts monitoring <drive>\n"
-           "    [/d <drive> [<instance id>]] detaches filter <instance id> from <drive>\n"
-           "    [/l] lists all the drives the monitor is currently attached to\n"
-           "    [/s] turns on and off showing logging output on the screen\n"
-           "    [/f] turns on and off logging to database at C:/Users/Public/log.db\n"
+    printf("Valid switches: [/a <drive>] [/d <drive>] [/l] [/f]\n"
+           "\n"
+           "    [/a <drive>] starts monitoring <drive> with logs stored at C:/Users/Public/log.db\n"
+           "    [/d <drive> [<instance id>]] detaches filter <instance id> from <drive> and stops logging\n"
+           "    [/l] lists all the volumes and which the driver is currently attached to and monitoring\n"
            "  If you are in command mode:\n"
            "    [enter] will enter command mode\n"
            "    [go|g] will exit command mode\n"
@@ -977,11 +931,13 @@ Return Value:
             if (HRESULT_FROM_WIN32( ERROR_NO_MORE_ITEMS ) == hResult) {
 
                 printf( "No volumes found.\n" );
+                WriteAlertToDatabase("No volumes found to list.");
 
             } else {
 
                 printf( "Volume listing failed with error: 0x%08x\n",
                         hResult );
+                WriteAlertToDatabase("Volume listing failed with error: 0x%08x",hResult);
             }
         }
     }
