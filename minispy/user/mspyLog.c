@@ -1023,7 +1023,24 @@ WriteAlertToDatabase(
         return;
     }
 
-    sqlite3_bind_int64(stmt, 0, (sqlite3_int64)time(NULL)); // 100ns ticks
+    SYSTEMTIME localTime;
+    GetLocalTime(&localTime);
+
+    char* timeBuffer;
+    size_t timeBufferSize;
+
+    snprintf(timeBuffer, timeBufferSize,
+        "%04d-%02d-%02d %02d:%02d:%02d.%03d",
+        localTime.wYear,
+        localTime.wMonth,
+        localTime.wDay,
+        localTime.wHour,
+        localTime.wMinute,
+        localTime.wSecond,
+        localTime.wMilliseconds);
+
+    sqlite3_bind_text(stmt, 0, timeBuffer, -1, SQLITE_TRANSIENT); // 100ns ticks
+    WriteToLogAnsi(time(NULL));
 
     //Proceed to format message.
     char buffer[1024];

@@ -34,15 +34,22 @@ CREATE TABLE IF NOT EXISTS MinifilterLog (
     FOREIGN KEY (RuleID) REFERENCES Rules(RuleID)
 );
 
+-- DROP TABLE IF EXISTS Alerts;
+CREATE TABLE IF NOT EXISTS Alerts (
+    AlertID INTEGER PRIMARY KEY AUTOINCREMENT,
+    Timestamp DATETIME NOT NULL,
+    AlertMessage TEXT                                       -- Human-readable explanation
+);
+
 -- Idea is to store the definitions for all of the data here
 -- DROP TABLE IF EXISTS Definitions;
-CREATE TABLE IF NOT EXISTS ColumnDescritpions (
+CREATE TABLE IF NOT EXISTS ColumnDescriptions (
     ColumnID INT PRIMARY KEY,
     ColumnName TEXT NOT NULL,
     ColumnLongName TEXT NOT NULL,
     ColumnDescritpion TEXT NOT NULL
 );
-INSERT INTO ColumnDescritpions (ColumnID, ColumnName, ColumnLongName, ColumnDescritpion)
+INSERT INTO ColumnDescriptions (ColumnID, ColumnName, ColumnLongName, ColumnDescritpion)
 VALUES 
     (0, "LogID", "Log ID", "A unique identifier for each log entry."),
     (1, "SeqNum", "Sequence Number", "Sequence Number (SeqNum)"),
@@ -281,13 +288,6 @@ CREATE TABLE IF NOT EXISTS RuleHistory (
     Timestamp DATETIME NOT NULL, --The data and time that the rule was modified.
     FullRule TEXT NOT NULL,
     FOREIGN KEY (RuleID) REFERENCES Rules(RuleID)
-);
-
--- DROP TABLE IF EXISTS Alerts;
-CREATE TABLE IF NOT EXISTS Alerts (
-    AlertID INTEGER PRIMARY KEY AUTOINCREMENT,
-    Timestamp DATETIME NOT NULL,
-    AlertMessage TEXT                                       -- Human-readable explanation
 );
 
 CREATE TABLE IF NOT EXISTS ArgMapping (
