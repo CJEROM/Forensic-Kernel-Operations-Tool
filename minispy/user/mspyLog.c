@@ -25,6 +25,7 @@ _Analysis_mode_(_Analysis_code_type_user_code_)
 #include <stdlib.h>
 #include <winioctl.h>
 #include "mspyLog.h"
+#include <stdio.h>
 
 #include <sqlite3.h>
 #include <time.h>
@@ -1023,13 +1024,12 @@ WriteAlertToDatabase(
         return;
     }
 
+    char timeStr[64];  // Output buffer
+
     SYSTEMTIME localTime;
     GetLocalTime(&localTime);
 
-    char* timeBuffer;
-    size_t timeBufferSize;
-
-    snprintf(timeBuffer, timeBufferSize,
+    snprintf(timeStr, sizeof(timeStr),
         "%04d-%02d-%02d %02d:%02d:%02d.%03d",
         localTime.wYear,
         localTime.wMonth,
@@ -1039,8 +1039,7 @@ WriteAlertToDatabase(
         localTime.wSecond,
         localTime.wMilliseconds);
 
-    sqlite3_bind_text(stmt, 0, timeBuffer, -1, SQLITE_TRANSIENT); // 100ns ticks
-    WriteToLogAnsi(time(NULL));
+    sqlite3_bind_text(stmt, 0, timeStr, -1, SQLITE_TRANSIENT); // 100ns ticks
 
     //Proceed to format message.
     char buffer[1024];
