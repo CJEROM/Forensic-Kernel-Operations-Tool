@@ -1024,6 +1024,10 @@ WriteAlertToDatabase(
         return;
     }
 
+    // For using unix timestamp
+    /*time_t now = time(NULL);
+    sqlite3_bind_int64(stmt, 1, (sqlite3_int64)now);*/
+
     char timeStr[64];  // Output buffer
 
     SYSTEMTIME localTime;
@@ -1039,7 +1043,7 @@ WriteAlertToDatabase(
         localTime.wSecond,
         localTime.wMilliseconds);
 
-    sqlite3_bind_text(stmt, 0, timeStr, -1, SQLITE_TRANSIENT); // 100ns ticks
+    sqlite3_bind_text(stmt, 1, timeStr, -1, SQLITE_TRANSIENT); // 100ns ticks
 
     //Proceed to format message.
     char buffer[1024];
@@ -1049,7 +1053,7 @@ WriteAlertToDatabase(
     vsnprintf(buffer, sizeof(buffer), message, args);
     va_end(args);
 
-    sqlite3_bind_text(stmt, 1, buffer, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, buffer, -1, SQLITE_TRANSIENT);
 
     //Execute insert command
     if (sqlite3_step(stmt) != SQLITE_DONE) {
