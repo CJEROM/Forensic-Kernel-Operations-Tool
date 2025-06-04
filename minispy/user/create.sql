@@ -69,7 +69,7 @@ VALUES
     (22, "OpFileName", "Operation File Name", "The name of the file associated with the operation."),
     (23, "RequestorMode", "Requestor Mode", ""),
     (24, "RuleID", "Rule ID", ""),
-    (25, "RuleAction", "Rule Action'", "");
+    (25, "RuleAction", "Rule Action", "");
 
 
 -- DROP TABLE IF EXISTS OperationTypes;
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS OperationTypes (
     OperationTypeID INTEGER PRIMARY KEY AUTOINCREMENT,
     OperationType TEXT NOT NULL,
     OperationTypeName TEXT NOT NULL,
-    Descritpion TEXT NOT NULL,
+    Descritpion TEXT NOT NULL
 );
 -- INSERT INTO - (-) 
 -- VALUES 
@@ -290,19 +290,6 @@ CREATE TABLE IF NOT EXISTS Alerts (
     AlertMessage TEXT                                       -- Human-readable explanation
 );
 
--- DROP TABLE IF EXISTS Settings;
-CREATE TABLE IF NOT EXISTS Settings (
-    SettingID INTEGER PRIMARY KEY AUTOINCREMENT,
-    SettingName TEXT NOT NULL,
-    SettingState INTEGER                                       -- Human-readable explanation
-);
-
--- DROP TABLE IF EXISTS DriverInstanceQueue;
-CREATE TABLE IF NOT EXISTS DriverInstanceQueue (
-    DriverInstanceQueueID INTEGER PRIMARY KEY AUTOINCREMENT,
-    State INTEGER NOT NULL,
-);
-
 CREATE TABLE IF NOT EXISTS ArgMapping (
     ArgMapID INTEGER PRIMARY KEY AUTOINCREMENT,
     MajorOpCode INTEGER NOT NULL,
@@ -310,7 +297,8 @@ CREATE TABLE IF NOT EXISTS ArgMapping (
     ArgIndex INTEGER NOT NULL, -- 1 to 6
     ArgName TEXT NOT NULL,
     Description TEXT,           -- optional, human-readable notes
-    PRIMARY KEY (MajorOpCode, MinorOpCode, ArgIndex)
+    FOREIGN KEY (MajorOpCode) REFERENCES MajorIRPCodes(MajorIRPCode),
+    FOREIGN KEY (MinorOpCode) REFERENCES MinorIRPCodes(MinorIRPCode)
 );
 
 INSERT INTO ArgMapping (MajorOpCode, MinorOpCode, ArgIndex, ArgName, Description)
