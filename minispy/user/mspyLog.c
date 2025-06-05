@@ -1125,11 +1125,11 @@ Return Value:
     sqlite3_bind_text(stmt, 2, oprType, -1, SQLITE_TRANSIENT);
 
     // Convert to Unix timestamp with microsecond precision
-    INT64 preOpUnix = (RecordData->OriginatingTime.QuadPart - EPOCH_DIFF);
+    INT64 preOpUnix = (RecordData->OriginatingTime.QuadPart);
     sqlite3_bind_int64(stmt, 3, preOpUnix); // 100ns ticks
 
     // Convert to Unix timestamp with microsecond precision
-    INT64 postOpUnix = (RecordData->CompletionTime.QuadPart - EPOCH_DIFF);
+    INT64 postOpUnix = (RecordData->CompletionTime.QuadPart);
     sqlite3_bind_int64(stmt, 4, postOpUnix); // 100ns ticks
 
     //Set Process ID
