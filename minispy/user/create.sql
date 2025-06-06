@@ -51,32 +51,32 @@ CREATE TABLE IF NOT EXISTS ColumnDescriptions (
 );
 INSERT INTO ColumnDescriptions (ColumnID, ColumnName, ColumnLongName, ColumnDescritpion)
 VALUES 
-    (0, "LogID", "Log ID", "A unique identifier for each log entry."),
-    (1, "SeqNum", "Sequence Number", "Sequence Number (SeqNum)"),
-    (2, "OprType", "Operation Type", "Operation Type (Opr) - Identifies the operation type: IRP (I/O Request Packet), FIO (Fast I/O), FSF (File System Filter Operation), ERR (Error)"),
-    (3, "PreOpTime", "Pre Operation Start Time", "Time when the operation started."),
-    (4, "PostOpTime", "Post Operation Completion Time", "Time when the operation completed."),
-    (5, "ProcessId", "ProcessID", "The process ID that triggered the operation."),
-    (6, "ProcessFilePath", "Process File Path", ""),
-    (7, "ThreadId", "Thread ID", "The thread ID that triggered the operation."),
-    (8, "MajorOp", "IRP Major Operation", "The high-level I/O operation (e.g., Create, Read, Write)."),
-    (9, "MinorOp", "IRP Minor Operation", "A more specific sub-operation within the major category."),
-    (10, "IrpFlags", "Irp Flags", "Flags describing request characteristics (e.g., N for NoCache, P for Paging I/O, S for Synchronous)."),
-    (11, "DeviceObj", "Device Object", "Device object pointer."),
-    (12, "FileObj", "File Object", "File object pointer."),
-    (13, "FileTransaction", "File Transaction", "Transaction pointer (if applicable)."),
-    (14, "OpStatus", "Operation Status", "Return status and information about the operation."),
-    (15, "Information", "Information", ""),
-    (16, "Arg1", "Argument 1", "Operation-specific parameter 1 (e.g., buffer addresses, offsets)."),
-    (17, "Arg2", "Argument 2", "Operation-specific parameter 2"),
-    (18, "Arg3", "Argument 3", "Operation-specific parameter 3"),
-    (19, "Arg4", "Argument 4", "Operation-specific parameter 4"),
-    (20, "Arg5", "Argument 5", "Operation-specific parameter 5"),
-    (21, "Arg6", "Argument 6", "Operation-specific parameter 6"),
-    (22, "OpFileName", "Operation File Name", "The name of the file associated with the operation."),
-    (23, "RequestorMode", "Requestor Mode", ""),
-    (24, "RuleID", "Rule ID", ""),
-    (25, "RuleAction", "Rule Action", "");
+    (0, 'LogID', 'Log ID', 'A unique identifier for each log entry.'),
+    (1, 'SeqNum', 'Sequence Number', 'Sequence Number (SeqNum)'),
+    (2, 'OprType', 'Operation Type', 'Operation Type (Opr) - Identifies the operation type: IRP (I/O Request Packet), FIO (Fast I/O), FSF (File System Filter Operation), ERR (Error)'),
+    (3, 'PreOpTime', 'Pre Operation Start Time', 'Time when the operation started.'),
+    (4, 'PostOpTime', 'Post Operation Completion Time', 'Time when the operation completed.'),
+    (5, 'ProcessId', 'Process ID', 'The process ID that triggered the operation.'),
+    (6, 'ProcessFilePath', 'Process File Path', 'Full path of the process image responsible for the operation.'),
+    (7, 'ThreadId', 'Thread ID', 'The thread ID that triggered the operation.'),
+    (8, 'MajorOp', 'IRP Major Operation', 'The high-level I/O operation (e.g., Create, Read, Write).'),
+    (9, 'MinorOp', 'IRP Minor Operation', 'A more specific sub-operation within the major category.'),
+    (10, 'IrpFlags', 'IRP Flags', 'Flags describing request characteristics (e.g., N for NoCache, P for Paging I/O, S for Synchronous).'),
+    (11, 'DeviceObj', 'Device Object', 'Pointer to the device object involved in the operation.'),
+    (12, 'FileObj', 'File Object', 'Pointer to the file object being operated on.'),
+    (13, 'FileTransaction', 'File Transaction', 'Pointer to the file system transaction, if applicable.'),
+    (14, 'OpStatus', 'Operation Status', 'Return status code and outcome of the operation.'),
+    (15, 'Information', 'Information', 'Additional result information (e.g., number of bytes read or written).'),
+    (16, 'Arg1', 'Argument 1', 'Operation-specific parameter 1 (e.g., buffer addresses, offsets).'),
+    (17, 'Arg2', 'Argument 2', 'Operation-specific parameter 2.'),
+    (18, 'Arg3', 'Argument 3', 'Operation-specific parameter 3.'),
+    (19, 'Arg4', 'Argument 4', 'Operation-specific parameter 4.'),
+    (20, 'Arg5', 'Argument 5', 'Operation-specific parameter 5.'),
+    (21, 'Arg6', 'Argument 6', 'Operation-specific parameter 6.'),
+    (22, 'OpFileName', 'Operation File Name', 'The name or path of the file being operated on.'),
+    (23, 'RequestorMode', 'Requestor Mode', 'Indicates whether the request originated from User Mode or Kernel Mode.'),
+    (24, 'RuleID', 'Rule ID', 'Reference to the rule that was triggered by this operation.'),
+    (25, 'RuleAction', 'Rule Action', 'Action taken (e.g., Allow, Block, Alert) as defined in the rule.');
 
 
 -- DROP TABLE IF EXISTS OperationTypes;
@@ -88,9 +88,9 @@ CREATE TABLE IF NOT EXISTS OperationTypes (
 );
 INSERT INTO OperationTypes (OperationType, OperationTypeName, Descritpion) 
 VALUES 
-    ("FIO", "Fast I/O", "Fast I/O operations handled outside of normal IRP processing."),
-    ("FSF", "File System Filter", "File System Filter-specific operations, not part of standard IRP/MJ codes."),
-    ("IRP", "I/O Request Packet", "Standard I/O Request Packet operations used in driver communication.");
+    ('FIO', 'Fast I/O', 'Fast I/O operations handled outside of normal IRP processing.'),
+    ('FSF', 'File System Filter', 'File System Filter-specific operations, not part of standard IRP/MJ codes.'),
+    ('IRP', 'I/O Request Packet', 'Standard I/O Request Packet operations used in driver communication.');
 
 
 -- Create a new table to store major IRP (I/O Request Packet) codes
@@ -100,57 +100,58 @@ CREATE TABLE IF NOT EXISTS MajorIRPCodes (
     MajorIRPCode TEXT NOT NULL,         -- Name of the IRP operation
     Description TEXT NOT NULL,          -- What the Major IRP Code is for
     Link TEXT,
-    ArgumentsLink TEXT,
+    ArgumentsLink TEXT
 );
 -- Insert predefined list of Major IRP codes and their corresponding IDs
 -- These codes represent different types of I/O operations handled by Windows drivers
 INSERT INTO MajorIRPCodes (MajorIRPCodeID, MajorIRPCode, Description, Link, ArgumentsLink) 
 VALUES
-    (0, 'IRP_MJ_CREATE', "Create/open a file or device", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-create", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-create"),    
-    (1, 'IRP_MJ_CREATE_NAMED_PIPE', "Create a named pipe", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-create-named-pipe", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-create-named-pipe"),     
-    (2, 'IRP_MJ_CLOSE', "Close a handle to a file or device", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-close", NULL),         
-    (3, 'IRP_MJ_READ', "Read data from a file or device", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-read", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-read"),           
-    (4, 'IRP_MJ_WRITE', "Write data to a file or device", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-write", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-write"),            
-    (5, 'IRP_MJ_QUERY_INFORMATION', "Query file/device metadata", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-query-information", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-information"),    
-    (6, 'IRP_MJ_SET_INFORMATION', "Set file/device metadata", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-set-information", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-set-information"),      
-    (7, 'IRP_MJ_QUERY_EA', "Query extended attributes", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-query-ea", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-ea"),            
-    (8, 'IRP_MJ_SET_EA', "Set extended attributes", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-set-ea", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-set-ea"),           
-    (9, 'IRP_MJ_FLUSH_BUFFERS', "Flush buffered data to disk", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-flush-buffers", NULL),      
-    (10, 'IRP_MJ_QUERY_VOLUME_INFORMATION', "Get volume info (e.g., label, size)", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-query-volume-information", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-volume-information"),
-    (11, 'IRP_MJ_SET_VOLUME_INFORMATION', "Set volume information", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-set-volume-information", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-set-volume-information"), 
-    (12, 'IRP_MJ_DIRECTORY_CONTROL', "Handle directory-related operations", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-directory-control", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-directory-control"),  
-    (13, 'IRP_MJ_FILE_SYSTEM_CONTROL', "Filesystem-specific operations", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-file-system-control", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-file-system-control"),   
-    (14, 'IRP_MJ_DEVICE_CONTROL', "Device-specific I/O control codes (IOCTL)", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-device-control", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-device-control-and-irp-mj-internal-device-co"),   
-    (15, 'IRP_MJ_INTERNAL_DEVICE_CONTROL', "Internal I/O controls (kernel mode only)", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-internal-device-control", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-device-control-and-irp-mj-internal-device-co"), 
-    (16, 'IRP_MJ_SHUTDOWN', "Prepare device for system shutdown", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-shutdown", NULL),        
-    (17, 'IRP_MJ_LOCK_CONTROL', "File locking/unlocking operations", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-lock-control", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-lock-control"),      
-    (18, 'IRP_MJ_CLEANUP', "Cleanup operations before handle closure", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-cleanup", NULL),         
-    (19, 'IRP_MJ_CREATE_MAILSLOT', "Create a mailslot (message-based communication)", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-create-mailslot", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-create-mailslot"),   
-    (20, 'IRP_MJ_QUERY_SECURITY', "Query file or device security descriptor", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-query-security", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-security"),    
-    (21, 'IRP_MJ_SET_SECURITY', "Set file or device security descriptor", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-set-security", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-set-security"),       
-    (22, 'IRP_MJ_POWER', "Power management (e.g., sleep/wake)", NULL, NULL),             
-    (23, 'IRP_MJ_SYSTEM_CONTROL', "System control requests (e.g., WMI)", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-system-control"),  
-    (24, 'IRP_MJ_DEVICE_CHANGE', "Device plug/unplug notifications", NULL, NULL),  
-    (25, 'IRP_MJ_QUERY_QUOTA', "Query disk quota information", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-query-quota", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-quota"),  
-    (26, 'IRP_MJ_SET_QUOTA', "Set disk quota limits", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-set-quota", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-set-quota"),   
-    (27, 'IRP_MJ_PNP', "Plug and Play notifications", "https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-pnp", "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-pnp"), 
-    (28, 'IRP_MJ_ACQUIRE_FOR_SECTION_SYNCHRONIZATION', "Prepare for memory-mapped file access (e.g., CreateFileMapping).", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-acquire-for-section-synchronization"),
-    (29, 'IRP_MJ_RELEASE_FOR_SECTION_SYNCHRONIZATION', "Release locks from section synchronization.", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-release-for-section-synchronization"),
-    (30, 'IRP_MJ_ACQUIRE_FOR_MOD_WRITE', "Lock file for cache manager's modification write.", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-acquire-for-mod-write"),
-    (31, 'IRP_MJ_RELEASE_FOR_MOD_WRITE', "Release lock after mod write is done.", NULL, http://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-release-for-mod-write""),
-    (32, 'IRP_MJ_ACQUIRE_FOR_CC_FLUSH', "Prepare to flush file data from cache.", NULL, NULL),
-    (33, 'IRP_MJ_RELEASE_FOR_CC_FLUSH', "Release resources after cache flush.", NULL, NULL),
-    (34, 'IRP_MJ_NOTIFY_STREAM_FO_CREATION', "Notifies when a stream file object is created.", NULL, NULL),
-    (35, 'IRP_MJ_FAST_IO_CHECK_IF_POSSIBLE', "Check if fast I/O can be used.", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-fast-io-check-if-possible"),
-    (36, 'IRP_MJ_NETWORK_QUERY_OPEN', "Query file info over the network without opening.", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-network-query-open"),
-    (37, 'IRP_MJ_MDL_READ', "Map file data to memory for reading.", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-mdl-read"),
-    (38, 'IRP_MJ_MDL_READ_COMPLETE', "Finish MDL read and release resources.", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-mdl-read-complete"),
-    (39, 'IRP_MJ_PREPARE_MDL_WRITE', "Prepare memory for direct write access.", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-prepare-mdl-write"),
-    (40, 'IRP_MJ_MDL_WRITE_COMPLETE', "Complete MDL write and clean up.", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-mdl-write-complete"),
-    (41, 'IRP_MJ_VOLUME_MOUNT', "Sent when mounting a volume.", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-volume-mount"),
-    (42, 'IRP_MJ_VOLUME_DISMOUNT', "Sent when dismounting a volume.", NULL, NULL),
-    (43, 'IRP_MJ_TRANSACTION_NOTIFY', "Notify filters of transaction events.", NULL, NULL),
-    (44, 'IRP_MJ_QUERY_OPEN ', "Query file attributes on open.", NULL, "https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-open");
+    (0, 'IRP_MJ_CREATE', 'Create/open a file or device', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-create', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-create'),    
+    (1, 'IRP_MJ_CREATE_NAMED_PIPE', 'Create a named pipe', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-create-named-pipe', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-create-named-pipe'),     
+    (2, 'IRP_MJ_CLOSE', 'Close a handle to a file or device', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-close', NULL),         
+    (3, 'IRP_MJ_READ', 'Read data from a file or device', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-read', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-read'),           
+    (4, 'IRP_MJ_WRITE', 'Write data to a file or device', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-write', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-write'),            
+    (5, 'IRP_MJ_QUERY_INFORMATION', 'Query file/device metadata', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-query-information', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-information'),    
+    (6, 'IRP_MJ_SET_INFORMATION', 'Set file/device metadata', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-set-information', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-set-information'),      
+    (7, 'IRP_MJ_QUERY_EA', 'Query extended attributes', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-query-ea', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-ea'),            
+    (8, 'IRP_MJ_SET_EA', 'Set extended attributes', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-set-ea', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-set-ea'),           
+    (9, 'IRP_MJ_FLUSH_BUFFERS', 'Flush buffered data to disk', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-flush-buffers', NULL),      
+    (10, 'IRP_MJ_QUERY_VOLUME_INFORMATION', 'Get volume info (e.g., label, size)', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-query-volume-information', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-volume-information'),
+    (11, 'IRP_MJ_SET_VOLUME_INFORMATION', 'Set volume information', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-set-volume-information', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-set-volume-information'), 
+    (12, 'IRP_MJ_DIRECTORY_CONTROL', 'Handle directory-related operations', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-directory-control', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-directory-control'),  
+    (13, 'IRP_MJ_FILE_SYSTEM_CONTROL', 'Filesystem-specific operations', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-file-system-control', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-file-system-control'),   
+    (14, 'IRP_MJ_DEVICE_CONTROL', 'Device-specific I/O control codes (IOCTL)', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-device-control', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-device-control-and-irp-mj-internal-device-co'),   
+    (15, 'IRP_MJ_INTERNAL_DEVICE_CONTROL', 'Internal I/O controls (kernel mode only)', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-internal-device-control', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-device-control-and-irp-mj-internal-device-co'), 
+    (16, 'IRP_MJ_SHUTDOWN', 'Prepare device for system shutdown', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-shutdown', NULL),        
+    (17, 'IRP_MJ_LOCK_CONTROL', 'File locking/unlocking operations', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-lock-control', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-lock-control'),      
+    (18, 'IRP_MJ_CLEANUP', 'Cleanup operations before handle closure', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-cleanup', NULL),         
+    (19, 'IRP_MJ_CREATE_MAILSLOT', 'Create a mailslot (message-based communication)', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-create-mailslot', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-create-mailslot'),   
+    (20, 'IRP_MJ_QUERY_SECURITY', 'Query file or device security descriptor', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-query-security', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-security'),    
+    (21, 'IRP_MJ_SET_SECURITY', 'Set file or device security descriptor', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-set-security', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-set-security'),       
+    (22, 'IRP_MJ_POWER', 'Power management (e.g., sleep/wake)', NULL, NULL),             
+    (23, 'IRP_MJ_SYSTEM_CONTROL', 'System control requests (e.g., WMI)', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-system-control'),  
+    (24, 'IRP_MJ_DEVICE_CHANGE', 'Device plug/unplug notifications', NULL, NULL),  
+    (25, 'IRP_MJ_QUERY_QUOTA', 'Query disk quota information', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-query-quota', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-quota'),  
+    (26, 'IRP_MJ_SET_QUOTA', 'Set disk quota limits', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-set-quota', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-set-quota'),   
+    (27, 'IRP_MJ_PNP', 'Plug and Play notifications', 'https://learn.microsoft.com/en-us/previous-versions/windows/drivers/ifs/irp-mj-pnp', 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-pnp'), 
+    (28, 'IRP_MJ_ACQUIRE_FOR_SECTION_SYNCHRONIZATION', 'Prepare for memory-mapped file access (e.g., CreateFileMapping).', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-acquire-for-section-synchronization'),
+    (29, 'IRP_MJ_RELEASE_FOR_SECTION_SYNCHRONIZATION', 'Release locks from section synchronization.', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-release-for-section-synchronization'),
+    (30, 'IRP_MJ_ACQUIRE_FOR_MOD_WRITE', 'Lock file for cache manager''s modification write.', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-acquire-for-mod-write'),
+    (31, 'IRP_MJ_RELEASE_FOR_MOD_WRITE', 'Release lock after mod write is done.', NULL, 'http://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-release-for-mod-write'),
+    (32, 'IRP_MJ_ACQUIRE_FOR_CC_FLUSH', 'Prepare to flush file data from cache.', NULL, NULL),
+    (33, 'IRP_MJ_RELEASE_FOR_CC_FLUSH', 'Release resources after cache flush.', NULL, NULL),
+    (34, 'IRP_MJ_NOTIFY_STREAM_FO_CREATION', 'Notifies when a stream file object is created.', NULL, NULL),
+    (35, 'IRP_MJ_FAST_IO_CHECK_IF_POSSIBLE', 'Check if fast I/O can be used.', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-fast-io-check-if-possible'),
+    (36, 'IRP_MJ_NETWORK_QUERY_OPEN', 'Query file info over the network without opening.', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-network-query-open'),
+    (37, 'IRP_MJ_MDL_READ', 'Map file data to memory for reading.', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-mdl-read'),
+    (38, 'IRP_MJ_MDL_READ_COMPLETE', 'Finish MDL read and release resources.', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-mdl-read-complete'),
+    (39, 'IRP_MJ_PREPARE_MDL_WRITE', 'Prepare memory for direct write access.', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-prepare-mdl-write'),
+    (40, 'IRP_MJ_MDL_WRITE_COMPLETE', 'Complete MDL write and clean up.', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-mdl-write-complete'),
+    (41, 'IRP_MJ_VOLUME_MOUNT', 'Sent when mounting a volume.', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-volume-mount'),
+    (42, 'IRP_MJ_VOLUME_DISMOUNT', 'Sent when dismounting a volume.', NULL, NULL),
+    (43, 'IRP_MJ_TRANSACTION_NOTIFY', 'Notify filters of transaction events.', NULL, NULL),
+    (44, 'IRP_MJ_QUERY_OPEN', 'Query file attributes on open.', NULL, 'https://learn.microsoft.com/en-us/windows-hardware/drivers/ifs/flt-parameters-for-irp-mj-query-open');
+
 
 -- Table for Minor IRP Codes
 -- DROP TABLE IF EXISTS MinorIRPCodes;
@@ -297,12 +298,6 @@ CREATE TABLE IF NOT EXISTS RuleHistory (
 
 -- =================================================================== Views ===================================================================
 
--- For most recent 1 minute of activity (assuming timestamps in nanoseconds since epoch) (Line Graph / Time Series)
-CREATE VIEW IF NOT EXISTS View_RecentActivity AS
-SELECT *
-FROM MinifilterLog
-WHERE PreOpTime > (SELECT MAX(PreOpTime) FROM MinifilterLog) - (60 * 1000000000); -- (1 miutes) 60 sec in ns | Future ? [600 for 10 minutes]
-
 -- Total Operations Count
 CREATE VIEW IF NOT EXISTS View_TotalOperations AS
 SELECT COUNT(*) AS TotalOperations
@@ -312,17 +307,6 @@ FROM MinifilterLog;
 CREATE VIEW IF NOT EXISTS View_TotalAlerts AS
 SELECT COUNT(*) AS TotalAlerts
 FROM Alerts;
-
--- Plots Activity Spikes for certain operations
-CREATE VIEW IF NOT EXISTS View_RecentOpsLines AS
-SELECT 
-    ((PreOpTime / 1000000000) / 5) * 5 AS TimeBucket,
-    MajorOp,
-    COUNT(*) AS Count
-FROM MinifilterLog
-WHERE PreOpTime > (SELECT MAX(PreOpTime) FROM MinifilterLog) - (300 * 1000000000)
-GROUP BY TimeBucket, MajorOp
-ORDER BY TimeBucket;
 
 -- Operation Duration - average, lowest and highest instead (Box Plot?)
 CREATE VIEW IF NOT EXISTS View_OpDurationSummary AS
